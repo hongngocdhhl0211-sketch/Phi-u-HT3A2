@@ -1,0 +1,2074 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chiến Dịch Xây Dựng Tòa Nhà Tương Lai - Lớp 3A2</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Be Vietnam Pro -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Three.js cho mô hình 3D xoay 360 độ -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Be Vietnam Pro', sans-serif;
+      background: radial-gradient(circle at 50% 15%, #1e1b4b 0%, #0f172a 65%, #020617 100%);
+      min-height: 100vh;
+      color: #f8fafc;
+      overflow-x: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .glow-cyan {
+      box-shadow: 0 0 25px rgba(6, 182, 212, 0.45);
+    }
+    .glow-amber {
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.45);
+    }
+    @keyframes floatSoft {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-5px) rotate(1deg); }
+    }
+    .animate-float {
+      animation: floatSoft 3.5s ease-in-out infinite;
+    }
+    .draggable-card {
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .canvas-3d-container {
+      width: 100%;
+      height: 280px;
+      cursor: grab;
+      touch-action: none;
+    }
+    .canvas-3d-container:active {
+      cursor: grabbing;
+    }
+    .tab-btn-active {
+      background: linear-gradient(135deg, #f59e0b, #ea580c) !important;
+      color: #0f172a !important;
+      font-weight: 800 !important;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-100">
+
+  <!-- Thanh thông tin đầu trang -->
+  <header id="gameHeader" class="hidden sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-indigo-500/20 px-4 py-2.5 shadow-lg">
+    <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-xl shadow-md" id="headerAvatar">
+          🚀
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-white text-base md:text-lg tracking-wide" id="displayPlayerName">Nhóm Kỹ Sư 3A2</span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-900/80 border border-indigo-400/40 text-cyan-300 font-semibold">Lớp 3A2</span>
+          </div>
+          <span class="text-xs text-slate-400 block" id="currentStationText">🔧 Trạm 1: Khôi phục dữ liệu cạnh</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Điểm số -->
+        <div class="flex items-center gap-2 bg-slate-800/90 px-3.5 py-1.5 rounded-xl border border-amber-500/30">
+          <span class="text-xl">⭐</span>
+          <span class="font-extrabold text-amber-300 text-lg md:text-xl tracking-wider" id="scoreDisplay">0</span>
+          <span class="text-xs text-amber-200/70 font-semibold">ĐIỂM</span>
+        </div>
+
+        <!-- Chấm tròn 4 trạm -->
+        <div class="hidden sm:flex items-center gap-1.5 bg-slate-800/60 px-3 py-1.5 rounded-xl border border-slate-700/60">
+          <div class="flex gap-1" id="stationDots">
+            <div class="w-6 h-2 rounded-full bg-cyan-400 transition-all duration-300" id="dot-1"></div>
+            <div class="w-6 h-2 rounded-full bg-slate-700 transition-all duration-300" id="dot-2"></div>
+            <div class="w-6 h-2 rounded-full bg-slate-700 transition-all duration-300" id="dot-3"></div>
+            <div class="w-6 h-2 rounded-full bg-slate-700 transition-all duration-300" id="dot-4"></div>
+          </div>
+        </div>
+
+        <!-- Nút Trợ giúp -->
+        <button id="btnHelp" class="p-2 rounded-xl bg-slate-800 border border-slate-700 text-cyan-300 hover:bg-slate-700 transition" title="Hướng dẫn cách chơi">
+          ❓
+        </button>
+
+        <!-- Nút Bật/Tắt âm thanh -->
+        <button id="btnSoundToggle" class="p-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 transition" title="Bật/Tắt âm thanh">
+          🔊
+        </button>
+      </div>
+    </div>
+
+    <!-- Thanh tiến trình cấp độ -->
+    <div class="w-full bg-slate-800/80 h-1.5 mt-2 rounded-full overflow-hidden max-w-5xl mx-auto">
+      <div id="missionProgressBar" class="bg-gradient-to-r from-cyan-400 via-indigo-400 to-amber-400 h-full w-[25%] transition-all duration-500"></div>
+    </div>
+  </header>
+
+  <main class="flex-1 flex items-center justify-center p-3 sm:p-6 w-full max-w-5xl mx-auto">
+
+    <!-- MÀN HÌNH 0: CHÀO MỪNG / ĐĂNG NHẬP NHÓM -->
+    <section id="screenWelcome" class="w-full max-w-xl mx-auto text-center">
+      <div class="bg-slate-900/95 border border-indigo-500/40 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+        <div class="absolute -top-20 -left-20 w-44 h-44 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-20 -right-20 w-44 h-44 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-cyan-300 text-xs sm:text-sm font-semibold mb-4 animate-float">
+          <span>🤖</span> TRẠM KHÔNG GIAN TOÁN HỌC 3A2
+        </div>
+
+        <h1 class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-100 to-indigo-300 mb-3 tracking-tight uppercase leading-snug">
+          CHIẾN DỊCH XÂY DỰNG TÒA NHÀ TƯƠNG LAI
+        </h1>
+        <p class="text-slate-300 text-xs sm:text-sm leading-relaxed mb-6 font-medium">
+          Chào mừng các kĩ sư nhí <strong class="text-amber-300">3A2</strong>, hãy giúp Rô bốt giải mã bí ẩn về các <strong class="text-cyan-300">đỉnh, cạnh, mặt</strong> của Khối lập phương và khối hộp chữ nhật qua các trạm sau!
+        </p>
+
+        <!-- Form nhập Tên nhóm & Chọn biểu tượng -->
+        <div class="space-y-4 text-left mb-6">
+          <div>
+            <label for="inputStudentName" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+              Tên nhóm:
+            </label>
+            <input type="text" id="inputStudentName" placeholder="Nhập tên nhóm (VD: Nhóm Mặt Trời, Nhóm Rô-bốt 3A2)..." 
+              class="w-full px-4 py-3 rounded-2xl bg-slate-800/90 border border-slate-600 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 text-white placeholder-slate-500 outline-none text-base transition">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+              Chọn Huy Hiệu Phi Hành Gia:
+            </label>
+            <div class="grid grid-cols-5 gap-2" id="avatarSelector">
+              <button type="button" class="avatar-opt p-2.5 rounded-2xl bg-indigo-900/50 border-2 border-cyan-400 text-2xl transition hover:scale-110 active:scale-95" data-avatar="🚀">🚀</button>
+              <button type="button" class="avatar-opt p-2.5 rounded-2xl bg-slate-800/70 border-2 border-transparent text-2xl transition hover:scale-110 active:scale-95" data-avatar="🤖">🤖</button>
+              <button type="button" class="avatar-opt p-2.5 rounded-2xl bg-slate-800/70 border-2 border-transparent text-2xl transition hover:scale-110 active:scale-95" data-avatar="🧑‍🚀">🧑‍‍🚀</button>
+              <button type="button" class="avatar-opt p-2.5 rounded-2xl bg-slate-800/70 border-2 border-transparent text-2xl transition hover:scale-110 active:scale-95" data-avatar="⭐">⭐</button>
+              <button type="button" class="avatar-opt p-2.5 rounded-2xl bg-slate-800/70 border-2 border-transparent text-2xl transition hover:scale-110 active:scale-95" data-avatar="🛸">🛸</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 trạm thử thách -->
+        <div class="bg-slate-800/70 border border-slate-700/60 rounded-2xl p-4 text-xs text-slate-300 text-left mb-6 space-y-2">
+          <div class="font-bold text-cyan-300 flex items-center gap-1.5 mb-1">
+            <span>📋</span> Bốn trạm thử thách kĩ sư 3A2:
+          </div>
+          <div class="flex items-center gap-2"><span>🔧</span> <strong>Trạm 1:</strong> Khôi phục dữ liệu cạnh</div>
+          <div class="flex items-center gap-2"><span>📍</span> <strong>Trạm 2:</strong> Kích hoạt cảm biến đỉnh</div>
+          <div class="flex items-center gap-2"><span>🛣️</span> <strong>Trạm 3:</strong> Lập trình đường đi rô bốt</div>
+          <div class="flex items-center gap-2"><span>🏗️</span> <strong>Trạm 4:</strong> Hoàn thiện công trình 3D</div>
+        </div>
+
+        <button id="btnStartGame" type="button" class="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-sky-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-black text-lg tracking-wide uppercase shadow-lg shadow-cyan-500/25 active:scale-[0.98] transition flex items-center justify-center gap-2">
+          <span>KHỞI ĐỘNG NHIỆM VỤ</span> <span>➔</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- BÀI 1: KHÔI PHỤC DỮ LIỆU CẠNH -->
+    <section id="screenGame1" class="hidden w-full max-w-4xl mx-auto space-y-5">
+      <div class="bg-slate-900/90 border border-cyan-500/30 rounded-3xl p-5 backdrop-blur-xl shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <span class="px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 font-bold text-xs uppercase tracking-wider">
+            Bài 1 • 🔧 Trạm 1: Khôi phục dữ liệu cạnh
+          </span>
+          <span class="text-xs text-slate-400">Khối hộp chữ nhật</span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-bold text-white mb-1">
+          Khung Sắt Khối Hộp Chữ Nhật
+        </h2>
+        <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+          Một chiếc khung sắt dạng <strong class="text-cyan-300">khối hộp chữ nhật</strong> có các cạnh được sơn màu như hình vẽ. Em hãy đếm số lượng cạnh và chọn tấm gỗ vừa khít mặt trước của chiếc khung sắt đó!
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
+        <div class="md:col-span-6 bg-slate-900/90 border border-slate-800 rounded-3xl p-4 flex flex-col items-center justify-between relative shadow-inner">
+          <div class="w-full flex items-center justify-between text-xs text-slate-400 mb-2">
+            <span class="flex items-center gap-1.5"><span class="w-3.5 h-1.5 bg-cyan-400 inline-block rounded"></span> 4 Cạnh xanh đứng</span>
+            <span class="flex items-center gap-1.5"><span class="w-3.5 h-1.5 bg-rose-500 inline-block rounded"></span> 8 Cạnh đỏ đáy</span>
+          </div>
+
+          <div class="relative w-full max-w-[340px] aspect-[4/3] flex items-center justify-center my-auto">
+            <svg id="svgBox1" viewBox="0 0 340 240" class="w-full h-full drop-shadow-2xl">
+              <polygon id="svgDropFrontTarget" points="40,90 220,90 220,200 40,200" 
+                fill="rgba(30, 41, 59, 0.4)" stroke="#64748b" stroke-width="2" stroke-dasharray="6,4" 
+                class="transition-all duration-300" />
+              <g id="svgFacePreviewShape" class="transition-all duration-300"></g>
+
+              <line x1="120" y1="160" x2="300" y2="160" stroke="#f43f5e" stroke-width="3" stroke-dasharray="5,4" opacity="0.6"/>
+              <line x1="40" y1="200" x2="120" y2="160" stroke="#f43f5e" stroke-width="3" stroke-dasharray="5,4" opacity="0.6"/>
+              <line x1="120" y1="160" x2="120" y2="50" stroke="#06b6d4" stroke-width="4" stroke-dasharray="5,4" opacity="0.6"/>
+
+              <line x1="40" y1="90" x2="220" y2="90" stroke="#f43f5e" stroke-width="4.5"/>
+              <line x1="220" y1="90" x2="300" y2="50" stroke="#f43f5e" stroke-width="4.5"/>
+              <line x1="300" y1="50" x2="120" y2="50" stroke="#f43f5e" stroke-width="4.5"/>
+              <line x1="120" y1="50" x2="40" y2="90" stroke="#f43f5e" stroke-width="4.5"/>
+
+              <line x1="40" y1="200" x2="220" y2="200" stroke="#f43f5e" stroke-width="4.5"/>
+              <line x1="220" y1="200" x2="300" y2="160" stroke="#f43f5e" stroke-width="4.5"/>
+
+              <line x1="40" y1="90" x2="40" y2="200" stroke="#06b6d4" stroke-width="5"/>
+              <line x1="220" y1="90" x2="220" y2="200" stroke="#06b6d4" stroke-width="5"/>
+              <line x1="300" y1="50" x2="300" y2="160" stroke="#06b6d4" stroke-width="5"/>
+
+              <text id="svgFrontLabel" x="130" y="150" fill="#94a3b8" font-size="12" font-weight="bold" text-anchor="middle">
+                [CHỌN TẤM GỖ ĐỂ THỬ]
+              </text>
+            </svg>
+          </div>
+
+          <div id="dropStatusMessage" class="text-xs text-amber-300 font-semibold mt-2 text-center">
+            💡 Bấm chọn hình tròn, tam giác hoặc chữ nhật để nhìn trực tiếp hình đó trên mặt khung sắt!
+          </div>
+        </div>
+
+        <div class="md:col-span-6 space-y-4">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-5 space-y-3 shadow-lg">
+            <h3 class="text-sm font-bold text-cyan-300 uppercase tracking-wide flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-cyan-900/80 text-cyan-300 flex items-center justify-center text-xs font-black">a</span>
+              Khôi phục số lượng các cạnh:
+            </h3>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-slate-800/80 p-3 rounded-2xl border border-cyan-500/30">
+                <label class="block text-xs font-semibold text-cyan-200 mb-1">Cạnh màu XANH:</label>
+                <div class="flex items-center gap-2">
+                  <input type="number" id="inputGreenEdges" min="0" max="20" placeholder="?" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-600 focus:border-cyan-400 text-center font-black text-xl text-cyan-400 outline-none">
+                  <span class="text-xs text-slate-400">cạnh</span>
+                </div>
+              </div>
+
+              <div class="bg-slate-800/80 p-3 rounded-2xl border border-rose-500/30">
+                <label class="block text-xs font-semibold text-rose-200 mb-1">Cạnh màu ĐỎ:</label>
+                <div class="flex items-center gap-2">
+                  <input type="number" id="inputRedEdges" min="0" max="20" placeholder="?" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-600 focus:border-rose-400 text-center font-black text-xl text-rose-400 outline-none">
+                  <span class="text-xs text-slate-400">cạnh</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-5 space-y-3 shadow-lg">
+            <h3 class="text-sm font-bold text-amber-300 uppercase tracking-wide flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-amber-900/80 text-amber-300 flex items-center justify-center text-xs font-black">b</span>
+              Lắp tấm gỗ vừa khít vào mặt trước:
+            </h3>
+
+            <div class="grid grid-cols-3 gap-2" id="woodPiecesContainer">
+              <button type="button" class="draggable-card p-3 rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-slate-500 text-center text-xs font-bold transition active:scale-95 flex flex-col items-center justify-center gap-1 select-none"
+                   data-shape="circle">
+                <span class="text-2xl">⚪</span>
+                <span>A. Hình tròn</span>
+              </button>
+
+              <button type="button" class="draggable-card p-3 rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-slate-500 text-center text-xs font-bold transition active:scale-95 flex flex-col items-center justify-center gap-1 select-none"
+                   data-shape="triangle">
+                <span class="text-2xl">🔺</span>
+                <span>B. Hình tam giác</span>
+              </button>
+
+              <button type="button" class="draggable-card p-3 rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-slate-500 text-center text-xs font-bold transition active:scale-95 flex flex-col items-center justify-center gap-1 select-none"
+                   data-shape="rectangle">
+                <span class="text-2xl">🟫</span>
+                <span>C. Hình chữ nhật</span>
+              </button>
+            </div>
+          </div>
+
+          <button id="btnCheckGame1" type="button" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-black text-base uppercase tracking-wider shadow-lg shadow-cyan-500/25 active:scale-98 transition flex items-center justify-center gap-2">
+            <span>XÁC NHẬN DỮ LIỆU</span> <span>⚡</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- BÀI 2: KÍCH HOẠT CẢM BIẾN ĐỈNH -->
+    <section id="screenGame2" class="hidden w-full max-w-4xl mx-auto space-y-5">
+      <div class="bg-slate-900/90 border border-purple-500/30 rounded-3xl p-5 backdrop-blur-xl shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <span class="px-3 py-1 rounded-full bg-purple-950/80 border border-purple-500/40 text-purple-300 font-bold text-xs uppercase tracking-wider">
+            Bài 2 • 📍 Trạm 2: Kích hoạt cảm biến đỉnh
+          </span>
+          <span class="text-xs text-slate-400">Hình lập phương & Bảng nhân 3</span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-bold text-white mb-1">
+          Hộp Gỗ Khối Lập Phương Chạm Hoa
+        </h2>
+        <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+          Ở gần <strong class="text-purple-300">mỗi đỉnh</strong> của một chiếc hộp gỗ dạng <strong class="text-cyan-300">khối lập phương</strong>, bác Hà chạm <strong class="text-amber-300">3 bông hoa</strong>. Em có thể dùng chuột hoặc tay xoay khối hình 360 độ để quan sát tất cả các đỉnh và tính số bông hoa nhé!
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
+        <div class="md:col-span-6 bg-slate-900/90 border border-slate-800 rounded-3xl p-4 flex flex-col items-center justify-between shadow-inner">
+          <div class="w-full flex items-center justify-between text-xs px-1 mb-1">
+            <span class="text-cyan-300 font-semibold flex items-center gap-1.5">
+              <span>🔄</span> Kéo chuột hoặc vuốt để xoay 360°
+            </span>
+            <button id="btnResetCubeRotation" type="button" class="text-slate-400 hover:text-white text-xs bg-slate-800 px-2.5 py-1 rounded-lg transition">
+              Góc nhìn chuẩn
+            </button>
+          </div>
+
+          <div id="containerCube3D" class="canvas-3d-container rounded-2xl overflow-hidden relative border border-amber-600/30 bg-slate-950 flex items-center justify-center"></div>
+
+          <div class="text-[11px] text-amber-200/80 text-center mt-2">
+            🪵 Chiếc hộp gỗ có <strong>8 đỉnh</strong>, mỗi đỉnh được bác Hà chạm khắc <strong>3 bông hoa</strong>.
+          </div>
+        </div>
+
+        <div class="md:col-span-6 space-y-4">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-lg">
+            <div>
+              <span class="text-xs font-bold text-amber-400 uppercase tracking-wide">Giải mã công thức số bông hoa:</span>
+              <p class="text-xs sm:text-sm text-slate-300 mt-1">
+                Chiếc hộp có tất cả <strong class="text-cyan-300">8 đỉnh</strong>. Ở gần mỗi đỉnh chạm <strong class="text-rose-300">3 bông hoa</strong>.
+              </p>
+            </div>
+
+            <div class="bg-slate-800/80 p-4 rounded-2xl border border-purple-500/30 space-y-2">
+              <label for="inputGame2Formula" class="block text-xs font-bold text-slate-200 uppercase tracking-wider">
+                Viết phép tính:
+              </label>
+              <input type="text" id="inputGame2Formula" placeholder="" 
+                class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-600 focus:border-purple-400 text-center font-bold text-base text-amber-300 outline-none transition">
+              <span class="text-[11px] text-slate-400 block text-center">(Em hãy gõ phép tính nhân để tìm tổng số bông hoa)</span>
+            </div>
+
+            <div class="bg-slate-800/60 p-3.5 rounded-2xl border border-slate-700 flex items-center justify-between gap-3">
+              <span class="text-xs sm:text-sm font-bold text-slate-200">Bác Hà đã chạm tất cả:</span>
+              <div class="flex items-center gap-2">
+                <input type="number" id="inputFlowersTotal" placeholder="?" class="w-20 px-3 py-2 rounded-xl bg-slate-900 border border-slate-600 focus:border-amber-400 text-center font-black text-xl text-amber-300 outline-none">
+                <span class="text-xs text-slate-400 font-semibold">bông hoa</span>
+              </div>
+            </div>
+          </div>
+
+          <button id="btnCheckGame2" type="button" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-black text-base uppercase tracking-wider shadow-lg shadow-purple-500/25 active:scale-98 transition flex items-center justify-center gap-2">
+            <span>KIỂM TRA ĐÁP ÁN</span> <span>🌸</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- BÀI 3: LẬP TRÌNH ĐƯỜNG ĐI RÔ-BỐT -->
+    <section id="screenGame3" class="hidden w-full max-w-4xl mx-auto space-y-5">
+      <div class="bg-slate-900/90 border border-emerald-500/30 rounded-3xl p-5 backdrop-blur-xl shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <span class="px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-bold text-xs uppercase tracking-wider">
+            Bài 3 • 🛣️ Trạm 3: Lập trình đường đi rô bốt
+          </span>
+          <span class="text-xs text-slate-400">Khối hộp chữ nhật & Định hướng không gian</span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-bold text-white mb-1">
+          Hành Trình Rô-bốt Kiến Thu Thập Hạt Gạo
+        </h2>
+        <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+          Con kiến bò theo <strong class="text-amber-400">đường viền màu cam</strong> trên chiếc khung nhôm dạng khối hộp chữ nhật để đến chỗ <strong class="text-yellow-200">hạt gạo</strong>. Em hãy bấm nút điều khiển kiến bò từng bước và đếm số cạnh nhé!
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
+        <div class="md:col-span-7 bg-slate-900/90 border border-slate-800 rounded-3xl p-4 flex flex-col items-center justify-between shadow-inner">
+          <div class="w-full flex items-center justify-between text-xs mb-2">
+            <span class="text-emerald-300 font-semibold">Tuyến cáp quang màu cam:</span>
+            <span class="text-amber-300 font-bold" id="antStepStatus">Vị trí: Điểm xuất phát</span>
+          </div>
+
+          <div class="relative w-full max-w-[360px] aspect-[4/3] flex items-center justify-center my-auto">
+            <svg id="svgAntPath" viewBox="0 0 360 260" class="w-full h-full drop-shadow-2xl">
+              <line x1="120" y1="180" x2="310" y2="180" stroke="#334155" stroke-width="2" stroke-dasharray="4,4"/>
+              <line x1="50" y1="210" x2="120" y2="180" stroke="#334155" stroke-width="2" stroke-dasharray="4,4"/>
+              <line x1="120" y1="180" x2="120" y2="70" stroke="#334155" stroke-width="2" stroke-dasharray="4,4"/>
+
+              <line x1="50" y1="100" x2="240" y2="100" stroke="#38bdf8" stroke-width="3"/>
+              <line x1="240" y1="100" x2="310" y2="70" stroke="#38bdf8" stroke-width="3"/>
+              <line x1="310" y1="70" x2="120" y2="70" stroke="#38bdf8" stroke-width="3"/>
+              <line x1="120" y1="70" x2="50" y2="100" stroke="#38bdf8" stroke-width="3"/>
+              <line x1="50" y1="100" x2="50" y2="210" stroke="#38bdf8" stroke-width="3"/>
+              <line x1="240" y1="100" x2="240" y2="210" stroke="#38bdf8" stroke-width="3"/>
+              <line x1="50" y1="210" x2="240" y2="210" stroke="#38bdf8" stroke-width="3"/>
+
+              <line id="antEdge1" x1="50" y1="210" x2="240" y2="210" stroke="#f97316" stroke-width="6" stroke-linecap="round" class="transition-all duration-500"/>
+              <line id="antEdge2" x1="240" y1="210" x2="310" y2="180" stroke="#f97316" stroke-width="6" stroke-linecap="round" class="transition-all duration-500"/>
+              <line id="antEdge3" x1="310" y1="180" x2="310" y2="70" stroke="#f97316" stroke-width="6" stroke-linecap="round" class="transition-all duration-500"/>
+
+              <g transform="translate(310, 70)">
+                <ellipse rx="10" ry="6" fill="#fef08a" stroke="#eab308" stroke-width="2" transform="rotate(-30)"/>
+                <text x="0" y="-12" text-anchor="middle" font-size="11" font-weight="bold" fill="#fef08a">🌾 Hạt gạo</text>
+              </g>
+
+              <g id="antAvatarGroup" transform="translate(50, 210)" class="transition-transform duration-700 ease-out">
+                <circle r="14" fill="#1e1b4b" stroke="#f97316" stroke-width="2.5"/>
+                <text x="0" y="5" text-anchor="middle" font-size="14">🐜</text>
+              </g>
+            </svg>
+          </div>
+
+          <div class="flex items-center gap-2 mt-3">
+            <button id="btnStepAnt" type="button" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow transition active:scale-95">
+              <span>BƯỚC TIẾP THEO</span> <span>🐜 ➔</span>
+            </button>
+            <button id="btnResetAnt" type="button" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs transition">
+              Đặt lại vị trí
+            </button>
+          </div>
+        </div>
+
+        <div class="md:col-span-5 space-y-4">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 space-y-3.5 shadow-lg">
+            <h3 class="text-sm font-bold text-emerald-300 uppercase tracking-wide">
+              Nhật ký lộ trình con kiến:
+            </h3>
+
+            <div class="space-y-2 text-xs">
+              <div id="logStep1" class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-300 flex items-center justify-between">
+                <span>1. Bò hết cạnh đáy trước</span>
+                <span class="font-bold text-slate-500" id="badgeStep1">Chưa đi</span>
+              </div>
+              <div id="logStep2" class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-300 flex items-center justify-between">
+                <span>2. Rẽ qua cạnh đáy bên phải</span>
+                <span class="font-bold text-slate-500" id="badgeStep2">Chưa đi</span>
+              </div>
+              <div id="logStep3" class="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-300 flex items-center justify-between">
+                <span>3. Leo thẳng đứng lên hạt gạo</span>
+                <span class="font-bold text-slate-500" id="badgeStep3">Chưa đi</span>
+              </div>
+            </div>
+
+            <div class="pt-2 border-t border-slate-800">
+              <label class="block text-xs font-bold text-amber-200 mb-2">
+                Hỏi con kiến cần bò qua mấy cạnh để đến hạt gạo?
+              </label>
+              <div class="grid grid-cols-4 gap-2" id="antEdgeAnswers">
+                <button type="button" class="btn-edge-opt py-2.5 rounded-xl bg-slate-800 border border-slate-700 hover:border-emerald-400 font-extrabold text-sm text-slate-200 transition" data-edges="1">1</button>
+                <button type="button" class="btn-edge-opt py-2.5 rounded-xl bg-slate-800 border border-slate-700 hover:border-emerald-400 font-extrabold text-sm text-slate-200 transition" data-edges="2">2</button>
+                <button type="button" class="btn-edge-opt py-2.5 rounded-xl bg-slate-800 border border-slate-700 hover:border-emerald-400 font-extrabold text-sm text-slate-200 transition" data-edges="3">3</button>
+                <button type="button" class="btn-edge-opt py-2.5 rounded-xl bg-slate-800 border border-slate-700 hover:border-emerald-400 font-extrabold text-sm text-slate-200 transition" data-edges="4">4</button>
+              </div>
+            </div>
+          </div>
+
+          <button id="btnCheckGame3" type="button" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-base uppercase tracking-wider shadow-lg shadow-emerald-500/25 active:scale-98 transition flex items-center justify-center gap-2">
+            <span>XÁC NHẬN LỘ TRÌNH</span> <span>🏁</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- BÀI 4: HOÀN THIỆN CÔNG TRÌNH 3D (3 CHẾ ĐỘ: KHUNG - MẶT - 5 ĐÈN LỒNG) -->
+    <section id="screenGame4" class="hidden w-full max-w-4xl mx-auto space-y-5">
+      <div class="bg-slate-900/90 border border-amber-500/30 rounded-3xl p-5 backdrop-blur-xl shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <span class="px-3 py-1 rounded-full bg-amber-950/80 border border-amber-500/40 text-amber-300 font-bold text-xs uppercase tracking-wider">
+            Bài 4 • 🏗️ Trạm 4: Hoàn thiện công trình 3D
+          </span>
+          <span class="text-xs text-slate-400">Nan tre & Giấy màu đèn lồng</span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-bold text-white mb-1">
+          Khung Nan Tre Đèn Lồng Khối Lập Phương
+        </h2>
+        <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+          Chú Ba làm những chiếc đèn lồng có dạng <strong class="text-amber-300">khối lập phương</strong>. Mỗi cạnh dùng một nan tre, mỗi mặt dán một tờ giấy màu. Em hãy chọn 3 chế độ xem bên dưới để quan sát và tính số vật tư nhé!
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
+        <!-- Khu vực hiển thị 3 chế độ (Khung / Mặt / 5 đèn lồng) -->
+        <div class="md:col-span-5 bg-slate-900/90 border border-slate-800 rounded-3xl p-4 flex flex-col items-center justify-between shadow-inner">
+          
+          <!-- Thanh chọn 3 Giao Diện -->
+          <div class="w-full grid grid-cols-3 gap-1.5 p-1 bg-slate-950 rounded-2xl border border-slate-800 mb-2">
+            <button id="tabModeKhung" type="button" class="tab-btn-active py-2 rounded-xl text-xs font-bold text-slate-300 transition flex items-center justify-center gap-1">
+              <span>🎋</span> <span>Khung</span>
+            </button>
+            <button id="tabModeMat" type="button" class="py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition flex items-center justify-center gap-1">
+              <span>🎨</span> <span>Mặt</span>
+            </button>
+            <button id="tabMode5Lanterns" type="button" class="py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition flex items-center justify-center gap-1">
+              <span>🏮</span> <span>5 Đèn Lồng</span>
+            </button>
+          </div>
+
+          <!-- Khung hiển thị chính (Đổi theo từng giao diện) -->
+          <div class="w-full relative">
+            <!-- Header góc xoay cho chế độ 3D (Khung / Mặt) -->
+            <div id="bambooHeader3D" class="w-full flex items-center justify-between text-xs text-slate-400 mb-1">
+              <span class="text-amber-300 font-semibold flex items-center gap-1">
+                <span>🔄</span> <span id="bamboo3DTitle">Xoay 360° khung tre</span>
+              </span>
+              <button id="btnResetBambooRotation" type="button" class="text-slate-400 hover:text-white text-xs bg-slate-800 px-2 py-0.5 rounded transition">
+                Cân chỉnh
+              </button>
+            </div>
+
+            <!-- Vùng 3D (dành cho chế độ Khung & Mặt) -->
+            <div id="containerBamboo3D" class="canvas-3d-container rounded-2xl overflow-hidden relative border border-amber-600/30 bg-slate-950 flex items-center justify-center"></div>
+
+            <!-- Vùng hiển thị 5 Đèn Lồng chuẩn hình 3 -->
+            <div id="container5LanternsView" class="hidden w-full h-[280px] rounded-2xl overflow-y-auto p-2 bg-slate-950 border border-amber-600/30 flex flex-col gap-2">
+              <div class="grid grid-cols-2 gap-2 mt-2">
+                <!-- Đèn 1 -->
+                <div class="bg-slate-900/90 p-2 rounded-xl border border-amber-500/30 flex items-center gap-2">
+                  <svg viewBox="0 0 100 100" class="w-12 h-12 flex-shrink-0">
+                    <line x1="20" y1="10" x2="20" y2="90" stroke="#d97706" stroke-width="4.5"/>
+                    <line x1="72" y1="10" x2="72" y2="90" stroke="#d97706" stroke-width="4.5"/>
+                    <line x1="88" y1="2" x2="88" y2="82" stroke="#d97706" stroke-width="3.5"/>
+                    <line x1="36" y1="2" x2="36" y2="82" stroke="#d97706" stroke-width="3.5"/>
+                    <polygon points="20,24 72,24 88,14 36,14" fill="#38bdf8" stroke="#d97706" stroke-width="2"/>
+                    <polygon points="72,24 88,14 88,72 72,82" fill="#84cc16" stroke="#d97706" stroke-width="2"/>
+                    <rect x="20" y="24" width="52" height="58" fill="#ef4444" stroke="#d97706" stroke-width="2.5"/>
+                  </svg>
+                  <span class="text-xs font-bold text-rose-300">Đèn 1</span>
+                </div>
+                <!-- Đèn 2 -->
+                <div class="bg-slate-900/90 p-2 rounded-xl border border-amber-500/30 flex items-center gap-2">
+                  <svg viewBox="0 0 100 100" class="w-12 h-12 flex-shrink-0">
+                    <line x1="20" y1="10" x2="20" y2="90" stroke="#d97706" stroke-width="4.5"/>
+                    <line x1="72" y1="10" x2="72" y2="90" stroke="#d97706" stroke-width="4.5"/>
+                    <line x1="88" y1="2" x2="88" y2="82" stroke="#d97706" stroke-width="3.5"/>
+                    <line x1="36" y1="2" x2="36" y2="82" stroke="#d97706" stroke-width="3.5"/>
+                    <polygon points="20,24 72,24 88,14 36,14" fill="#38bdf8" stroke="#d97706" stroke-width="2"/>
+                    <polygon points="72,24 88,14 88,72 72,82" fill="#84cc16" stroke="#d97706" stroke-width="2"/>
+                    <rect x="20" y="24" width="52" height="58" fill="#ef4444" stroke="#d97706" stroke-width="2.5"/>
+                  </svg>
+                  <span class="text-xs font-bold text-amber-300">Đèn 2</span>
+                </div>
+                <!-- Đèn 3 -->
+                <div class="bg-slate-900/90 p-2 rounded-xl border border-amber-500/30 flex items-center gap-2">
+                  <svg viewBox="0 0 100 100" class="w-12 h-12 flex-shrink-0">
+                    <line x1="20" y1="10" x2="20" y2="90" stroke="#d97706" stroke-width="4.5"/>
+                    <line x1="72" y1="10" x2="72" y2="90" stroke="#d97706" stroke-width="4.5"/>
+                    <line x1="88" y1="2" x2="88" y2="82" stroke="#d97706" stroke-width="3.5"/>
+                    <line x1="36" y1="2" x2="36" y2="82" stroke="#d97706" stroke-width="3.5"/>
+                    <polygon points="20,24 72,24 88,14 36,14" fill="#38bdf8" stroke="#d97706" stroke-width="2"/>
+                    <polygon points="72,24 88,14 88,72 72,82" fill="#84cc16" stroke="#d97706" stroke-width="2"/>
+                    <rect x="20" y="24" width="52" height="58" fill="#ef4444" stroke="#d97706" stroke-width="2.5"/>
+                  </svg>
+                  <span class="text-xs font-bold text-cyan-300">Đèn 3</span>
+                </div>
+                <!-- Đèn 4 -->
+                <div class="bg-slate-900/90 p-2 rounded-xl border border-amber-500/30 flex items-center gap-2">
+                  <svg viewBox="0 0 100 100" class="w-12 h-12 flex-shrink-0">
+                    <line x1="20" y1="10" x2="20" y2="90" stroke="#d97706" stroke-width="4.5"/>
+                    <line x1="72" y1="10" x2="72" y2="90" stroke="#d97706" stroke-width="4.5"/>
+                    <line x1="88" y1="2" x2="88" y2="82" stroke="#d97706" stroke-width="3.5"/>
+                    <line x1="36" y1="2" x2="36" y2="82" stroke="#d97706" stroke-width="3.5"/>
+                    <polygon points="20,24 72,24 88,14 36,14" fill="#38bdf8" stroke="#d97706" stroke-width="2"/>
+                    <polygon points="72,24 88,14 88,72 72,82" fill="#84cc16" stroke="#d97706" stroke-width="2"/>
+                    <rect x="20" y="24" width="52" height="58" fill="#ef4444" stroke="#d97706" stroke-width="2.5"/>
+                  </svg>
+                  <span class="text-xs font-bold text-lime-300">Đèn 4</span>
+                </div>
+              </div>
+              <!-- Đèn 5 -->
+              <div class="bg-slate-900/90 p-2 rounded-xl border border-amber-500/30 flex items-center justify-center gap-2 mt-1">
+                <svg viewBox="0 0 100 100" class="w-12 h-12 flex-shrink-0">
+                  <line x1="20" y1="10" x2="20" y2="90" stroke="#d97706" stroke-width="4.5"/>
+                  <line x1="72" y1="10" x2="72" y2="90" stroke="#d97706" stroke-width="4.5"/>
+                  <line x1="88" y1="2" x2="88" y2="82" stroke="#d97706" stroke-width="3.5"/>
+                  <line x1="36" y1="2" x2="36" y2="82" stroke="#d97706" stroke-width="3.5"/>
+                  <polygon points="20,24 72,24 88,14 36,14" fill="#38bdf8" stroke="#d97706" stroke-width="2"/>
+                  <polygon points="72,24 88,14 88,72 72,82" fill="#84cc16" stroke="#d97706" stroke-width="2"/>
+                  <rect x="20" y="24" width="52" height="58" fill="#ef4444" stroke="#d97706" stroke-width="2.5"/>
+                </svg>
+                <span class="text-xs font-bold text-purple-300">Đèn 5</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Khu vực chú thích để trống hoàn toàn -->
+          <p id="bambooModeCaption" class="text-xs text-amber-300 font-bold mt-2 text-center"></p>
+        </div>
+
+        <!-- Cột nhập vật tư a và b -->
+        <div class="md:col-span-7 space-y-4">
+          <!-- Phần a: Số nan tre cho 1 đèn lồng -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 space-y-2.5 shadow-lg">
+            <h3 class="text-sm font-bold text-amber-300 uppercase tracking-wide flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-amber-900/80 text-amber-300 flex items-center justify-center text-xs font-black">a</span>
+              Mỗi chiếc đèn lồng cần dùng mấy nan tre?
+            </h3>
+            <div class="flex items-center gap-3 pt-1">
+              <input type="number" id="inputBambooCount" placeholder="?" class="w-24 px-4 py-2.5 rounded-2xl bg-slate-800 border border-slate-600 focus:border-amber-400 text-center font-black text-xl text-amber-300 outline-none">
+              <span class="text-sm font-semibold text-slate-200">nan tre</span>
+            </div>
+          </div>
+
+          <!-- Phần b: 5 chiếc đèn lồng cần bao nhiêu tờ giấy màu -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 space-y-3 shadow-lg">
+            <h3 class="text-sm font-bold text-rose-300 uppercase tracking-wide flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-rose-900/80 text-rose-300 flex items-center justify-center text-xs font-black">b</span>
+              5 chiếc đèn lồng như vậy cần dùng bao nhiêu tờ giấy màu?
+            </h3>
+            
+            <div class="space-y-1">
+              <label for="inputGame4Formula" class="block text-xs font-semibold text-slate-300">
+                Viết phép tính:
+              </label>
+              <input type="text" id="inputGame4Formula" placeholder="" 
+                class="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-600 focus:border-rose-400 text-center font-bold text-sm text-rose-200 outline-none">
+            </div>
+
+            <div class="flex items-center justify-between gap-3 pt-1">
+              <span class="text-xs sm:text-sm font-semibold text-slate-200">Cần dùng tất cả:</span>
+              <div class="flex items-center gap-2">
+                <input type="number" id="inputPaperCount" placeholder="?" class="w-24 px-4 py-2 rounded-2xl bg-slate-800 border border-slate-600 focus:border-rose-400 text-center font-black text-xl text-rose-300 outline-none">
+                <span class="text-sm font-semibold text-slate-200">tờ giấy màu</span>
+              </div>
+            </div>
+          </div>
+
+          <button id="btnCheckGame4" type="button" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-slate-950 font-black text-base uppercase tracking-wider shadow-lg shadow-amber-500/25 active:scale-98 transition flex items-center justify-center gap-2">
+            <span>HOÀN TẤT ĐƠN HÀNG 3D</span> <span>🏮</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- MÀN HÌNH CHIẾN THẮNG & HÌNH 3D KẾT HỢP TỔNG HỢP CẢ 4 BÀI TẬP -->
+    <section id="screenVictory" class="hidden w-full max-w-3xl mx-auto text-center space-y-6">
+      <div class="bg-slate-900/95 border-2 border-amber-400/60 rounded-3xl p-6 sm:p-8 backdrop-blur-2xl shadow-2xl relative overflow-hidden glow-amber">
+        <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-64 h-64 bg-amber-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="text-4xl sm:text-5xl mb-2 animate-bounce">🏆</div>
+        
+        <span class="px-4 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 font-extrabold text-xs uppercase tracking-widest inline-block mb-2">
+          XUẤT SẮC HOÀN THÀNH CHIẾN DỊCH!
+        </span>
+
+        <h2 class="text-xl sm:text-3xl font-black text-white mb-2 uppercase">
+          TÒA NHÀ TƯƠNG LAI 3A2 ĐÃ HOÀN TẤT
+        </h2>
+
+        <div class="bg-slate-950/90 border border-cyan-500/40 rounded-2xl p-3 my-4 text-left relative">
+          <div class="flex items-center justify-between text-xs px-2 mb-2">
+            <span class="text-cyan-300 font-bold flex items-center gap-1.5">
+              <span>🏛️</span> MÔ HÌNH 3D KẾT QUẢ TỔNG HỢP 4 BÀI TẬP (XOAY 360°)
+            </span>
+            <span class="text-slate-400 text-[10px]">Vuốt/kéo chuột xoay</span>
+          </div>
+
+          <div id="containerVictory3D" class="w-full h-[260px] sm:h-[300px] rounded-xl overflow-hidden bg-slate-950 relative border border-slate-800"></div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] text-slate-300 mt-2 text-center">
+            <div class="bg-slate-900/80 p-1.5 rounded-lg border border-cyan-500/30">
+              <span class="text-cyan-300 font-bold block">Bài 1</span>
+              <span>Khung sắt & tấm gỗ CN</span>
+            </div>
+            <div class="bg-slate-900/80 p-1.5 rounded-lg border border-purple-500/30">
+              <span class="text-purple-300 font-bold block">Bài 2</span>
+              <span>Hộp gỗ 8 đỉnh chạm hoa</span>
+            </div>
+            <div class="bg-slate-900/80 p-1.5 rounded-lg border border-emerald-500/30">
+              <span class="text-emerald-300 font-bold block">Bài 3</span>
+              <span>Đường cam & kiến</span>
+            </div>
+            <div class="bg-slate-900/80 p-1.5 rounded-lg border border-amber-500/30">
+              <span class="text-amber-300 font-bold block">Bài 4</span>
+              <span>Đèn lồng nan tre 3D</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-b from-slate-800/90 to-slate-900/90 border border-amber-500/40 rounded-2xl p-4 sm:p-5 text-left relative">
+          <div class="flex items-center justify-between border-b border-slate-700 pb-3 mb-3">
+            <div>
+              <span class="text-xs text-slate-400 block">Kỹ sư trưởng danh dự:</span>
+              <span class="text-lg sm:text-2xl font-black text-cyan-300" id="victoryStudentName">Nhóm Kỹ Sư 3A2</span>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-slate-400 block">Chi đội:</span>
+              <span class="text-base font-bold text-amber-300">Lớp 3A2</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 text-xs sm:text-sm">
+            <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700/60">
+              <span class="text-slate-400 block">Tổng điểm đạt được:</span>
+              <span class="text-2xl font-black text-amber-400" id="victoryFinalScore">100</span>
+              <span class="text-xs text-slate-400">/ 100 điểm tuyệt đối</span>
+            </div>
+
+            <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700/60">
+              <span class="text-slate-400 block">Huy hiệu năng lực:</span>
+              <span class="text-base sm:text-lg font-black text-emerald-300">Bậc Thầy Kiến Trúc 3D</span>
+              <span class="text-xs text-slate-400 block">Đỉnh - Cạnh - Mặt Hoàn Hảo</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <button id="btnRestartGame" type="button" class="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-400 to-indigo-600 hover:from-cyan-300 hover:to-indigo-500 text-slate-950 font-black text-base shadow-lg shadow-cyan-500/25 active:scale-95 transition flex items-center justify-center gap-2">
+            <span>🔄</span> <span>CHƠI LẠI TỪ ĐẦU</span>
+          </button>
+          <button id="btnShareCertificate" type="button" class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold text-sm active:scale-95 transition flex items-center justify-center gap-2">
+            <span>📋</span> <span>SAO CHÉP THÀNH TÍCH</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL PHẢN HỒI KẾT QUẢ -->
+  <div id="feedbackModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-sm p-4">
+    <div id="feedbackCard" class="w-full max-w-md bg-slate-900 border-2 rounded-3xl p-6 text-center shadow-2xl transform transition-all scale-95 duration-200">
+      <div id="feedbackIcon" class="text-5xl mb-3">🎉</div>
+      <h3 id="feedbackTitle" class="text-xl font-black text-white mb-2">Chính xác tuyệt vời!</h3>
+      <p id="feedbackMessage" class="text-slate-300 text-sm leading-relaxed mb-5"></p>
+      <button id="btnFeedbackContinue" type="button" class="w-full py-3.5 rounded-2xl font-extrabold text-sm uppercase tracking-wider text-slate-950 shadow-md transition active:scale-95">
+        TIẾP TỤC HÀNH TRÌNH ➔
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL HƯỚNG DẪN CHƠI CHUNG -->
+  <div id="helpModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 backdrop-blur-sm p-4">
+    <div class="w-full max-w-lg bg-slate-900 border border-cyan-500/40 rounded-3xl p-6 text-left shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-lg font-black text-cyan-300 flex items-center gap-2">
+          <span>📖</span> HƯỚNG DẪN CHIẾN DỊCH
+        </h3>
+        <button id="btnCloseHelp" type="button" class="text-slate-400 hover:text-white text-xl">✕</button>
+      </div>
+      <div class="space-y-3 text-xs sm:text-sm text-slate-300">
+        <p>• <strong>🔧 Trạm 1:</strong> Đếm số cạnh màu xanh (4) và cạnh màu đỏ (8). Bấm chọn các hình để thấy hình nào lắp vừa khít mặt trước.</p>
+        <p>• <strong>📍 Trạm 2:</strong> Xoay hộp gỗ 360 độ quan sát 8 đỉnh có chạm hoa, tự gõ phép tính nhân (3 × 8 = 24) và đáp số 24.</p>
+        <p>• <strong>🛣️ Trạm 3:</strong> Bấm "Bước tiếp theo" đưa kiến bò qua từng cạnh màu cam đến hạt gạo và chọn số cạnh đã đi (3 cạnh).</p>
+        <p>• <strong>🏗️ Trạm 4:</strong> Chọn 3 tab (Khung, Mặt, 5 Đèn Lồng) để quan sát mô hình 360 độ; điền số nan tre cho 1 đèn (12 nan) và tự viết phép tính dán giấy màu cho 5 đèn (6 × 5 = 30).</p>
+      </div>
+      <button id="btnGotHelp" type="button" class="w-full py-3 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm transition">
+        ĐÃ HIỂU, BẮT ĐẦU NGAY!
+      </button>
+    </div>
+  </div>
+
+  <div id="toastNotification" class="fixed bottom-5 right-5 z-50 transform translate-y-24 opacity-0 transition-all duration-300 bg-slate-800 text-white border border-slate-700 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 text-sm pointer-events-none">
+    <span id="toastIcon">ℹ️</span>
+    <span id="toastText">Thông báo</span>
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. TRẠNG THÁI & HỆ THỐNG ÂM THANH
+    // ==========================================
+    const gameState = {
+      playerName: "Nhóm Kỹ Sư 3A2",
+      playerAvatar: "🚀",
+      score: 0,
+      currentStation: 1,
+      soundEnabled: true,
+      game1SelectedShape: null,
+      game3CurrentStep: 0,
+      game3SelectedEdges: null
+    };
+
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+      playTone(freq, duration, type = 'sine', gainVal = 0.15) {
+        if (!gameState.soundEnabled || !this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch (e) {}
+      }
+      playPop() {
+        this.playTone(600, 0.08, 'triangle', 0.2);
+      }
+      playSuccess() {
+        if (!gameState.soundEnabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+          setTimeout(() => this.playTone(freq, 0.2, 'sine', 0.18), i * 90);
+        });
+      }
+      playWrong() {
+        if (!gameState.soundEnabled || !this.ctx) return;
+        this.playTone(280, 0.18, 'sawtooth', 0.15);
+        setTimeout(() => this.playTone(220, 0.25, 'sawtooth', 0.18), 120);
+      }
+      playStep() {
+        this.playTone(450, 0.06, 'sine', 0.12);
+      }
+      playFanfare() {
+        if (!gameState.soundEnabled || !this.ctx) return;
+        [523, 659, 784, 1046, 1318].forEach((f, i) => {
+          setTimeout(() => this.playTone(f, 0.35, 'triangle', 0.22), i * 110);
+        });
+      }
+    }
+
+    const sound = new SoundEngine();
+
+    // ==========================================
+    // 2. ĐIỀU HƯỚNG MÀN HÌNH & GIAO DIỆN CHUNG
+    // ==========================================
+    function switchScreen(targetScreenId) {
+      const screens = [
+        'screenWelcome',
+        'screenGame1',
+        'screenGame2',
+        'screenGame3',
+        'screenGame4',
+        'screenVictory'
+      ];
+      screens.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
+
+      const target = document.getElementById(targetScreenId);
+      if (target) {
+        target.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      if (targetScreenId === 'screenGame2') {
+        setTimeout(initOrResizeCube3D, 60);
+      } else if (targetScreenId === 'screenGame4') {
+        setTimeout(initOrResizeBamboo3D, 60);
+      } else if (targetScreenId === 'screenVictory') {
+        setTimeout(initOrResizeVictory3D, 60);
+      }
+    }
+
+    function updateStationIndicators(stationNum) {
+      gameState.currentStation = stationNum;
+      const titles = [
+        "",
+        "🔧 Trạm 1: Khôi phục dữ liệu cạnh",
+        "📍 Trạm 2: Kích hoạt cảm biến đỉnh",
+        "🛣️ Trạm 3: Lập trình đường đi rô bốt",
+        "🏗️️ Trạm 4: Hoàn thiện công trình 3D"
+      ];
+      const curText = document.getElementById('currentStationText');
+      if (curText) curText.textContent = titles[stationNum] || "";
+
+      for (let i = 1; i <= 4; i++) {
+        const dot = document.getElementById(`dot-${i}`);
+        if (dot) {
+          if (i === stationNum) {
+            dot.className = "w-6 h-2 rounded-full bg-cyan-400 transition-all duration-300 shadow-sm shadow-cyan-400";
+          } else if (i < stationNum) {
+            dot.className = "w-6 h-2 rounded-full bg-emerald-500 transition-all duration-300";
+          } else {
+            dot.className = "w-6 h-2 rounded-full bg-slate-700 transition-all duration-300";
+          }
+        }
+      }
+
+      const progressBar = document.getElementById('missionProgressBar');
+      if (progressBar) {
+        const pct = Math.min(100, stationNum * 25);
+        progressBar.style.width = `${pct}%`;
+      }
+    }
+
+    function addScore(pts) {
+      gameState.score += pts;
+      const scoreEl = document.getElementById('scoreDisplay');
+      if (scoreEl) scoreEl.textContent = gameState.score;
+    }
+
+    function showToast(msg, icon = 'ℹ️') {
+      const toast = document.getElementById('toastNotification');
+      const text = document.getElementById('toastText');
+      const iconEl = document.getElementById('toastIcon');
+      if (!toast || !text) return;
+      text.textContent = msg;
+      if (iconEl) iconEl.textContent = icon;
+      toast.classList.remove('translate-y-24', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-24', 'opacity-0');
+      }, 3000);
+    }
+
+    let feedbackCallback = null;
+    function showFeedback({ isCorrect, title, message, onContinue }) {
+      const modal = document.getElementById('feedbackModal');
+      const icon = document.getElementById('feedbackIcon');
+      const titleEl = document.getElementById('feedbackTitle');
+      const msgEl = document.getElementById('feedbackMessage');
+      const btn = document.getElementById('btnFeedbackContinue');
+      const card = document.getElementById('feedbackCard');
+
+      feedbackCallback = onContinue;
+
+      if (isCorrect) {
+        sound.playSuccess();
+        icon.textContent = "🎉";
+        card.className = "w-full max-w-md bg-slate-900 border-2 border-emerald-500/80 rounded-3xl p-6 text-center shadow-2xl shadow-emerald-500/20";
+        titleEl.textContent = title || "Chính xác tuyệt vời!";
+        btn.className = "w-full py-3.5 rounded-2xl font-extrabold text-sm uppercase tracking-wider bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 shadow-md transition active:scale-95";
+        btn.textContent = "TIẾP TỤC HÀNH TRÌNH ➔";
+      } else {
+        sound.playWrong();
+        icon.textContent = "💡";
+        card.className = "w-full max-w-md bg-slate-900 border-2 border-amber-500/80 rounded-3xl p-6 text-center shadow-2xl shadow-amber-500/20";
+        titleEl.textContent = title || "Chưa chính xác!";
+        btn.className = "w-full py-3.5 rounded-2xl font-extrabold text-sm uppercase tracking-wider bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 shadow-md transition active:scale-95";
+        btn.textContent = "THỬ LẠI ↺";
+      }
+
+      msgEl.innerHTML = message;
+      modal.classList.remove('hidden');
+    }
+
+    document.getElementById('btnFeedbackContinue').addEventListener('click', () => {
+      sound.playPop();
+      document.getElementById('feedbackModal').classList.add('hidden');
+      if (typeof feedbackCallback === 'function') {
+        const cb = feedbackCallback;
+        feedbackCallback = null;
+        cb();
+      }
+    });
+
+    document.querySelectorAll('.avatar-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        sound.init();
+        sound.playPop();
+        document.querySelectorAll('.avatar-opt').forEach(b => {
+          b.classList.remove('border-cyan-400', 'bg-indigo-900/50');
+          b.classList.add('border-transparent', 'bg-slate-800/70');
+        });
+        btn.classList.remove('border-transparent', 'bg-slate-800/70');
+        btn.classList.add('border-cyan-400', 'bg-indigo-900/50');
+        gameState.playerAvatar = btn.getAttribute('data-avatar') || '🚀';
+      });
+    });
+
+    document.getElementById('btnStartGame').addEventListener('click', () => {
+      sound.init();
+      sound.playSuccess();
+      const inputName = (document.getElementById('inputStudentName').value || '').trim();
+      if (inputName) {
+        gameState.playerName = inputName;
+      }
+      document.getElementById('displayPlayerName').textContent = gameState.playerName;
+      document.getElementById('headerAvatar').textContent = gameState.playerAvatar;
+
+      document.getElementById('gameHeader').classList.remove('hidden');
+      updateStationIndicators(1);
+      switchScreen('screenGame1');
+      showToast(`Chào mừng ${gameState.playerName} bước vào Trạm 1!`, gameState.playerAvatar);
+    });
+
+    document.getElementById('btnSoundToggle').addEventListener('click', () => {
+      sound.init();
+      gameState.soundEnabled = !gameState.soundEnabled;
+      document.getElementById('btnSoundToggle').textContent = gameState.soundEnabled ? '🔊' : '🔇';
+      showToast(gameState.soundEnabled ? "Đã bật âm thanh" : "Đã tắt âm thanh", gameState.soundEnabled ? '🔊' : '🔇');
+    });
+
+    const helpModal = document.getElementById('helpModal');
+    document.getElementById('btnHelp').addEventListener('click', () => {
+      sound.playPop();
+      helpModal.classList.remove('hidden');
+    });
+    document.getElementById('btnCloseHelp').addEventListener('click', () => {
+      helpModal.classList.add('hidden');
+    });
+    document.getElementById('btnGotHelp').addEventListener('click', () => {
+      sound.playPop();
+      helpModal.classList.add('hidden');
+    });
+
+    // ==========================================
+    // 3. LOGIC BÀI 1: KHÔI PHỤC DỮ LIỆU CẠNH
+    // ==========================================
+    function updateGame1FacePreview(shape) {
+      gameState.game1SelectedShape = shape;
+      const previewGroup = document.getElementById('svgFacePreviewShape');
+      const dropTarget = document.getElementById('svgDropFrontTarget');
+      const label = document.getElementById('svgFrontLabel');
+      const statusMsg = document.getElementById('dropStatusMessage');
+
+      previewGroup.innerHTML = '';
+
+      if (shape === 'circle') {
+        dropTarget.setAttribute('fill', 'rgba(239, 68, 68, 0.15)');
+        dropTarget.setAttribute('stroke', '#ef4444');
+        dropTarget.setAttribute('stroke-dasharray', '4,4');
+
+        previewGroup.innerHTML = `
+          <circle cx="130" cy="145" r="52" fill="#ef4444" fill-opacity="0.45" stroke="#ef4444" stroke-width="3"/>
+          <text x="130" y="150" fill="#fca5a5" font-size="11" font-weight="bold" text-anchor="middle">HÌNH TRÒN (HỞ 4 GÓC)</text>
+        `;
+        label.textContent = "";
+        statusMsg.innerHTML = "❌ <strong>Hình tròn:</strong> Bị hở 4 góc xung quanh, không khớp với khung chữ nhật!";
+        statusMsg.className = "text-xs text-rose-400 font-semibold mt-2 text-center";
+      } else if (shape === 'triangle') {
+        dropTarget.setAttribute('fill', 'rgba(239, 68, 68, 0.15)');
+        dropTarget.setAttribute('stroke', '#ef4444');
+        dropTarget.setAttribute('stroke-dasharray', '4,4');
+
+        previewGroup.innerHTML = `
+          <polygon points="130,95 215,195 45,195" fill="#f59e0b" fill-opacity="0.45" stroke="#f59e0b" stroke-width="3"/>
+          <text x="130" y="165" fill="#fde68a" font-size="11" font-weight="bold" text-anchor="middle">TAM GIÁC (THIẾU 2 BÊN)</text>
+        `;
+        label.textContent = "";
+        statusMsg.innerHTML = "❌ <strong>Hình tam giác:</strong> Bị khuyết hai bên mép trên, không phủ kín khung!";
+        statusMsg.className = "text-xs text-amber-400 font-semibold mt-2 text-center";
+      } else if (shape === 'rectangle') {
+        dropTarget.setAttribute('fill', '#b45309');
+        dropTarget.setAttribute('stroke', '#f59e0b');
+        dropTarget.setAttribute('stroke-dasharray', 'none');
+
+        previewGroup.innerHTML = `
+          <rect x="40" y="90" width="180" height="110" fill="#b45309" fill-opacity="0.85" stroke="#f59e0b" stroke-width="2"/>
+          <text x="130" y="150" fill="#fef08a" font-size="12" font-weight="bold" text-anchor="middle">✓ VỪA KHÍT MẶT TRƯỚC</text>
+        `;
+        label.textContent = "";
+        statusMsg.innerHTML = "✨ <strong>Hình chữ nhật:</strong> Phủ kín khít hoàn hảo toàn bộ mặt trước của khung sắt!";
+        statusMsg.className = "text-xs text-emerald-400 font-bold mt-2 text-center";
+      }
+    }
+
+    document.querySelectorAll('.draggable-card').forEach(btn => {
+      btn.addEventListener('click', () => {
+        sound.playPop();
+        document.querySelectorAll('.draggable-card').forEach(b => {
+          b.className = "draggable-card p-3 rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-slate-500 text-center text-xs font-bold transition active:scale-95 flex flex-col items-center justify-center gap-1 select-none";
+        });
+        btn.className = "draggable-card p-3 rounded-2xl bg-indigo-950/80 border-2 border-cyan-400 text-cyan-300 text-center text-xs font-bold transition active:scale-95 flex flex-col items-center justify-center gap-1 select-none shadow-lg shadow-cyan-500/20";
+        const shape = btn.getAttribute('data-shape');
+        updateGame1FacePreview(shape);
+      });
+    });
+
+    document.getElementById('btnCheckGame1').addEventListener('click', () => {
+      const greenVal = parseInt(document.getElementById('inputGreenEdges').value, 10);
+      const redVal = parseInt(document.getElementById('inputRedEdges').value, 10);
+
+      if (isNaN(greenVal) || isNaN(redVal)) {
+        showFeedback({
+          isCorrect: false,
+          title: "Chưa điền đủ số cạnh!",
+          message: "Em hãy đếm và điền số cạnh màu xanh và màu đỏ vào 2 ô trống ở câu a nhé!",
+          onContinue: null
+        });
+        return;
+      }
+
+      if (!gameState.game1SelectedShape) {
+        showFeedback({
+          isCorrect: false,
+          title: "Chưa chọn tấm gỗ mặt trước!",
+          message: "Em hãy bấm chọn một trong 3 hình (tròn, tam giác, chữ nhật) ở câu b để lắp thử vào mặt trước khung sắt nhé!",
+          onContinue: null
+        });
+        return;
+      }
+
+      const isGreenCorrect = (greenVal === 4);
+      const isRedCorrect = (redVal === 8);
+      const isShapeCorrect = (gameState.game1SelectedShape === 'rectangle');
+
+      if (isGreenCorrect && isRedCorrect && isShapeCorrect) {
+        addScore(25);
+        showFeedback({
+          isCorrect: true,
+          title: "Chính xác tuyệt vời!",
+          message: "Khung sắt có đúng <strong>4 cạnh màu xanh đứng</strong>, <strong>8 cạnh màu đỏ đáy</strong> và mặt trước là <strong>Hình chữ nhật (C)</strong> vừa khít hoàn toàn!<br><span class='text-amber-300 font-bold'>+25 Điểm ⭐</span>",
+          onContinue: () => {
+            updateStationIndicators(2);
+            switchScreen('screenGame2');
+            showToast("Chào mừng đến Trạm 2: Kích hoạt cảm biến đỉnh!", '📍');
+          }
+        });
+      } else {
+        let errorMsg = "";
+        if (!isGreenCorrect) errorMsg += "<br>• Số cạnh màu xanh dựng đứng là <strong>4 cạnh</strong>.";
+        if (!isRedCorrect) errorMsg += "<br>• Số cạnh màu đỏ (4 cạnh đáy trên + 4 cạnh đáy dưới) là <strong>8 cạnh</strong>.";
+        if (!isShapeCorrect) errorMsg += "<br>• Mặt trước của khối hộp chữ nhật có dạng <strong>Hình chữ nhật</strong> (chọn C).";
+        showFeedback({
+          isCorrect: false,
+          title: "Dữ liệu chưa chính xác!",
+          message: `Em hãy kiểm tra lại nhé:${errorMsg}`,
+          onContinue: null
+        });
+      }
+    });
+
+    // ==========================================
+    // 4. THREE.JS BÀI 2: HỘP GỖ CHẠM HOA XOAY 360 ĐỘ
+    // ==========================================
+    let cube3DScene, cube3DCamera, cube3DRenderer, cube3DMesh;
+    let isCube3DDragging = false, cubePreviousMousePosition = { x: 0, y: 0 };
+
+    function createWoodFlowerTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#cfab84';
+      ctx.fillRect(0, 0, 512, 512);
+
+      ctx.fillStyle = 'rgba(150, 110, 75, 0.12)';
+      for (let i = 0; i < 512; i += 6) {
+        ctx.fillRect(i, 0, 2, 512);
+      }
+
+      const highlight = ctx.createLinearGradient(0, 0, 512, 0);
+      highlight.addColorStop(0, 'rgba(255, 255, 255, 0.02)');
+      highlight.addColorStop(0.46, 'rgba(255, 255, 255, 0.22)');
+      highlight.addColorStop(0.54, 'rgba(0, 0, 0, 0.04)');
+      highlight.addColorStop(1, 'rgba(0, 0, 0, 0.08)');
+      ctx.fillStyle = highlight;
+      ctx.fillRect(0, 0, 512, 512);
+
+      ctx.strokeStyle = '#3d2516';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(3, 3, 506, 506);
+
+      function drawSingleCarvedFlower(ox, oy, size) {
+        ctx.save();
+        ctx.translate(ox, oy);
+
+        ctx.strokeStyle = '#3a2012';
+        ctx.lineWidth = 3.8;
+        ctx.fillStyle = '#dec1a2';
+
+        for (let i = 0; i < 5; i++) {
+          const angle = (i * Math.PI * 2) / 5 - Math.PI / 2;
+          const px = Math.cos(angle) * (size * 0.55);
+          const py = Math.sin(angle) * (size * 0.55);
+          ctx.beginPath();
+          ctx.arc(px, py, size * 0.45, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.35, 0, Math.PI * 2);
+        ctx.fillStyle = '#b79776';
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.16, 0, Math.PI * 1.5);
+        ctx.strokeStyle = '#3a2012';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      const flowerRadius = 36;
+      drawSingleCarvedFlower(52, 52, flowerRadius);
+      drawSingleCarvedFlower(460, 52, flowerRadius);
+      drawSingleCarvedFlower(52, 460, flowerRadius);
+      drawSingleCarvedFlower(460, 460, flowerRadius);
+
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    function initOrResizeCube3D() {
+      const container = document.getElementById('containerCube3D');
+      if (!container) return;
+
+      const width = container.clientWidth || 300;
+      const height = container.clientHeight || 280;
+
+      if (!cube3DRenderer) {
+        cube3DScene = new THREE.Scene();
+        cube3DCamera = new THREE.PerspectiveCamera(34, width / height, 0.1, 1000);
+        cube3DCamera.position.set(2.4, 1.8, 3.2);
+        cube3DCamera.lookAt(0, 0, 0);
+
+        cube3DRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        cube3DRenderer.setSize(width, height);
+        cube3DRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(cube3DRenderer.domElement);
+
+        const ambLight = new THREE.AmbientLight(0xffffff, 0.95);
+        cube3DScene.add(ambLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffeedb, 0.75);
+        dirLight.position.set(2.5, 4, 3);
+        cube3DScene.add(dirLight);
+
+        const sideLight = new THREE.DirectionalLight(0xd9c5b0, 0.4);
+        sideLight.position.set(-3, 0, -2);
+        cube3DScene.add(sideLight);
+
+        const woodTexture = createWoodFlowerTexture();
+        const material = new THREE.MeshStandardMaterial({
+          map: woodTexture,
+          roughness: 0.85,
+          metalness: 0.02
+        });
+
+        const geometry = new THREE.BoxGeometry(1.65, 1.65, 1.65);
+        cube3DMesh = new THREE.Mesh(geometry, material);
+        cube3DScene.add(cube3DMesh);
+
+        const edgesGeom = new THREE.EdgesGeometry(geometry);
+        const edgesMat = new THREE.LineBasicMaterial({ color: 0x3d2516, linewidth: 2.8 });
+        const wireframe = new THREE.LineSegments(edgesGeom, edgesMat);
+        cube3DMesh.add(wireframe);
+
+        cube3DMesh.rotation.set(0, -0.68, 0);
+
+        const dom = cube3DRenderer.domElement;
+        dom.addEventListener('mousedown', (e) => {
+          isCube3DDragging = true;
+          cubePreviousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+        window.addEventListener('mouseup', () => { isCube3DDragging = false; });
+        dom.addEventListener('mousemove', (e) => {
+          if (!isCube3DDragging || !cube3DMesh) return;
+          const deltaX = e.clientX - cubePreviousMousePosition.x;
+          const deltaY = e.clientY - cubePreviousMousePosition.y;
+          cube3DMesh.rotation.y += deltaX * 0.01;
+          cube3DMesh.rotation.x += deltaY * 0.01;
+          cubePreviousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        dom.addEventListener('touchstart', (e) => {
+          if (e.touches.length === 1) {
+            isCube3DDragging = true;
+            cubePreviousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+          }
+        }, { passive: true });
+        window.addEventListener('touchend', () => { isCube3DDragging = false; });
+        dom.addEventListener('touchmove', (e) => {
+          if (!isCube3DDragging || !cube3DMesh || e.touches.length !== 1) return;
+          const deltaX = e.touches[0].clientX - cubePreviousMousePosition.x;
+          const deltaY = e.touches[0].clientY - cubePreviousMousePosition.y;
+          cube3DMesh.rotation.y += deltaX * 0.012;
+          cube3DMesh.rotation.x += deltaY * 0.012;
+          cubePreviousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }, { passive: true });
+
+        function animateCube() {
+          requestAnimationFrame(animateCube);
+          cube3DRenderer.render(cube3DScene, cube3DCamera);
+        }
+        animateCube();
+      } else {
+        cube3DCamera.aspect = width / height;
+        cube3DCamera.updateProjectionMatrix();
+        cube3DRenderer.setSize(width, height);
+      }
+    }
+
+    document.getElementById('btnResetCubeRotation').addEventListener('click', () => {
+      sound.playPop();
+      if (cube3DMesh) {
+        cube3DMesh.rotation.set(0, -0.68, 0);
+      }
+    });
+
+    document.getElementById('btnCheckGame2').addEventListener('click', () => {
+      const formulaRaw = (document.getElementById('inputGame2Formula').value || '').trim().toLowerCase();
+      const inputFlowers = parseInt(document.getElementById('inputFlowersTotal').value, 10);
+
+      if (!formulaRaw) {
+        showFeedback({
+          isCorrect: false,
+          title: "Chưa viết phép tính!",
+          message: "Em hãy viết phép tính nhân để tìm số bông hoa vào ô <strong>'Viết phép tính'</strong> nhé!",
+          onContinue: null
+        });
+        return;
+      }
+
+      if (isNaN(inputFlowers)) {
+        showFeedback({
+          isCorrect: false,
+          title: "Chưa điền số bông hoa!",
+          message: "Em hãy điền số bông hoa tính được vào ô trống đáp số nhé!",
+          onContinue: null
+        });
+        return;
+      }
+
+      const normalizedFormula = formulaRaw.replace(/\s+/g, '').replace(/×/g, 'x').replace(/\*/g, 'x');
+      const isFormulaValid = normalizedFormula.includes('3x8') || normalizedFormula.includes('8x3');
+      const isCountCorrect = (inputFlowers === 24);
+
+      if (isFormulaValid && isCountCorrect) {
+        addScore(25);
+        showFeedback({
+          isCorrect: true,
+          title: "Xuất sắc! Phép tính hoàn toàn chính xác!",
+          message: "Khối lập phương có <strong>8 đỉnh</strong>, mỗi đỉnh chạm 3 bông hoa. Phép tính đúng là <strong>3 × 8 = 24 (bông hoa)</strong>! Bác Hà đã chạm tất cả 24 bông hoa!<br><span class='text-amber-300 font-bold'>+25 Điểm ⭐</span>",
+          onContinue: () => {
+            updateStationIndicators(3);
+            switchScreen('screenGame3');
+            showToast("Chào mừng đến Trạm 3: Lập trình đường đi rô bốt!", '🛣');
+          }
+        });
+      } else {
+        let errorMsg = "";
+        if (!isFormulaValid) errorMsg += "<br>• Phép tính đúng là số bông hoa ở 1 đỉnh nhân với số đỉnh: <strong>3 × 8 = 24</strong> (hoặc 8 × 3 = 24).";
+        if (!isCountCorrect) errorMsg += "<br>• Đáp số tổng số bông hoa bác Hà chạm phải là <strong>24 bông hoa</strong>.";
+        showFeedback({
+          isCorrect: false,
+          title: "Phép tính hoặc kết quả chưa đúng!",
+          message: `Em hãy kiểm tra lại nhé:${errorMsg}`,
+          onContinue: null
+        });
+      }
+    });
+
+    // ==========================================
+    // 5. LOGIC BÀI 3: LẬP TRÌNH ĐƯỜNG ĐI RÔ-BỐT
+    // ==========================================
+    const antStepsPositions = [
+      { x: 50, y: 210, text: "Vị trí: Điểm xuất phát" },
+      { x: 240, y: 210, text: "Vị trí: Xong Cạnh 1 (Đáy trước)" },
+      { x: 310, y: 180, text: "Vị trí: Xong Cạnh 2 (Đáy phải)" },
+      { x: 310, y: 70, text: "Vị trí: Xong Cạnh 3 (Đến hạt gạo 🎉)" }
+    ];
+
+    function updateAntVisuals(step) {
+      gameState.game3CurrentStep = step;
+      const pos = antStepsPositions[step];
+      const antGroup = document.getElementById('antAvatarGroup');
+      const statusText = document.getElementById('antStepStatus');
+      
+      if (antGroup) {
+        antGroup.setAttribute('transform', `translate(${pos.x}, ${pos.y})`);
+      }
+      if (statusText) {
+        statusText.textContent = pos.text;
+      }
+
+      const edge1 = document.getElementById('antEdge1');
+      const edge2 = document.getElementById('antEdge2');
+      const edge3 = document.getElementById('antEdge3');
+      const b1 = document.getElementById('badgeStep1');
+      const b2 = document.getElementById('badgeStep2');
+      const b3 = document.getElementById('badgeStep3');
+
+      if (step >= 1) {
+        edge1.setAttribute('stroke', '#22c55e');
+        b1.textContent = "✓ Đã đi qua";
+        b1.className = "font-bold text-emerald-400";
+      } else {
+        edge1.setAttribute('stroke', '#f97316');
+        b1.textContent = "Chưa đi";
+        b1.className = "font-bold text-slate-500";
+      }
+
+      if (step >= 2) {
+        edge2.setAttribute('stroke', '#22c55e');
+        b2.textContent = "✓ Đã đi qua";
+        b2.className = "font-bold text-emerald-400";
+      } else {
+        edge2.setAttribute('stroke', '#f97316');
+        b2.textContent = "Chưa đi";
+        b2.className = "font-bold text-slate-500";
+      }
+
+      if (step >= 3) {
+        edge3.setAttribute('stroke', '#22c55e');
+        b3.textContent = "✓ Đã đi qua";
+        b3.className = "font-bold text-emerald-400";
+      } else {
+        edge3.setAttribute('stroke', '#f97316');
+        b3.textContent = "Chưa đi";
+        b3.className = "font-bold text-slate-500";
+      }
+    }
+
+    document.getElementById('btnStepAnt').addEventListener('click', () => {
+      sound.playStep();
+      let nextStep = gameState.game3CurrentStep + 1;
+      if (nextStep > 3) nextStep = 3;
+      updateAntVisuals(nextStep);
+      if (nextStep === 3) {
+        sound.playSuccess();
+        showToast("Kiến đã đến chỗ hạt gạo ngon lành!", '🌾');
+      }
+    });
+
+    document.getElementById('btnResetAnt').addEventListener('click', () => {
+      sound.playPop();
+      updateAntVisuals(0);
+    });
+
+    document.querySelectorAll('.btn-edge-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        sound.playPop();
+        document.querySelectorAll('.btn-edge-opt').forEach(b => {
+          b.className = "btn-edge-opt py-2.5 rounded-xl bg-slate-800 border border-slate-700 hover:border-emerald-400 font-extrabold text-sm text-slate-200 transition";
+        });
+        btn.className = "btn-edge-opt py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-black text-sm transition shadow-lg shadow-emerald-500/30";
+        gameState.game3SelectedEdges = parseInt(btn.getAttribute('data-edges'), 10);
+      });
+    });
+
+    document.getElementById('btnCheckGame3').addEventListener('click', () => {
+      if (!gameState.game3SelectedEdges) {
+        showFeedback({
+          isCorrect: false,
+          title: "Chưa chọn số cạnh!",
+          message: "Em hãy quan sát đường đi màu cam và chọn số cạnh mà con kiến cần bò qua nhé!",
+          onContinue: null
+        });
+        return;
+      }
+
+      if (gameState.game3SelectedEdges === 3) {
+        addScore(25);
+        updateAntVisuals(3);
+        showFeedback({
+          isCorrect: true,
+          title: "Chính xác tuyệt vời!",
+          message: "Đúng rồi! Con kiến đã bò qua đúng <strong>3 cạnh</strong>: <br>1. Cạnh đáy trước ➔ 2. Cạnh đáy bên phải ➔ 3. Cạnh đứng để đến hạt gạo!<br><span class='text-amber-300 font-bold'>+25 Điểm ⭐</span>",
+          onContinue: () => {
+            updateStationIndicators(4);
+            switchScreen('screenGame4');
+            showToast("Chào mừng đến Trạm 4: Hoàn thiện công trình 3D!", '🏗️');
+          }
+        });
+      } else {
+        showFeedback({
+          isCorrect: false,
+          title: "Số cạnh chưa chính xác!",
+          message: `Em hãy bấm nút <strong>"BƯỚC TIẾP THEO"</strong> để quan sát kiến bò từng cạnh một: đáy trước (1), đáy phải (2) và cột đứng lên đỉnh (3) nhé!`,
+          onContinue: null
+        });
+      }
+    });
+
+    // =========================================================================
+    // 6. THREE.JS BÀI 4: KHUNG NAN TRE VÀ 3 CHẾ ĐỘ (KHUNG - MẶT - 5 ĐÈN LỒNG)
+    // =========================================================================
+    let bambooScene, bambooCamera, bambooRenderer, bambooGroup, innerPaperCube;
+    let isBambooDragging = false, bambooPreviousMousePosition = { x: 0, y: 0 };
+    let bambooCurrentMode = 'khung';
+
+    function initOrResizeBamboo3D() {
+      const container = document.getElementById('containerBamboo3D');
+      if (!container) return;
+
+      const width = container.clientWidth || 300;
+      const height = container.clientHeight || 280;
+
+      if (!bambooRenderer) {
+        bambooScene = new THREE.Scene();
+        bambooCamera = new THREE.PerspectiveCamera(38, width / height, 0.1, 1000);
+        bambooCamera.position.set(2.8, 2.3, 3.4);
+        bambooCamera.lookAt(0, 0, 0);
+
+        bambooRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        bambooRenderer.setSize(width, height);
+        bambooRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(bambooRenderer.domElement);
+
+        const ambLight = new THREE.AmbientLight(0xffffff, 0.95);
+        bambooScene.add(ambLight);
+
+        const dirLight = new THREE.DirectionalLight(0xfff5dd, 0.85);
+        dirLight.position.set(3, 5, 3);
+        bambooScene.add(dirLight);
+
+        bambooGroup = new THREE.Group();
+        bambooScene.add(bambooGroup);
+
+        const paperMaterials = [
+          new THREE.MeshStandardMaterial({ color: 0x84cc16, roughness: 0.35, side: THREE.DoubleSide }),
+          new THREE.MeshStandardMaterial({ color: 0x84cc16, roughness: 0.35, side: THREE.DoubleSide }),
+          new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.35, side: THREE.DoubleSide }),
+          new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.35, side: THREE.DoubleSide }),
+          new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.35, side: THREE.DoubleSide }),
+          new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.35, side: THREE.DoubleSide })
+        ];
+
+        innerPaperCube = new THREE.Mesh(new THREE.BoxGeometry(1.42, 1.42, 1.42), paperMaterials);
+        innerPaperCube.visible = false;
+        bambooGroup.add(innerPaperCube);
+
+        const bambooMat = new THREE.MeshStandardMaterial({
+          color: 0xdeb066,
+          roughness: 0.45,
+          metalness: 0.05
+        });
+        const jointMat = new THREE.MeshStandardMaterial({
+          color: 0x9a6c2d,
+          roughness: 0.6
+        });
+
+        const half = 0.72;
+        const radius = 0.04;
+
+        function createStick(p1, p2, isVerticalPole = false) {
+          const v1 = new THREE.Vector3(...p1);
+          const v2 = new THREE.Vector3(...p2);
+
+          if (isVerticalPole) {
+            v1.y -= 0.12;
+            v2.y += 0.12;
+          }
+
+          const dist = v1.distanceTo(v2);
+          const geom = new THREE.CylinderGeometry(radius, radius, dist, 16);
+          const stick = new THREE.Mesh(geom, bambooMat);
+
+          const mid = new THREE.Vector3().addVectors(v1, v2).multiplyScalar(0.5);
+          stick.position.copy(mid);
+
+          const dir = new THREE.Vector3().subVectors(v2, v1).normalize();
+          const up = new THREE.Vector3(0, 1, 0);
+          stick.quaternion.setFromUnitVectors(up, dir);
+          bambooGroup.add(stick);
+
+          const nodeGeom = new THREE.TorusGeometry(radius * 1.15, 0.012, 6, 12);
+          const node = new THREE.Mesh(nodeGeom, jointMat);
+          node.position.copy(mid);
+          node.quaternion.copy(stick.quaternion);
+          bambooGroup.add(node);
+        }
+
+        createStick([-half, -half, -half], [-half, half, -half], true);
+        createStick([half, -half, -half], [half, half, -half], true);
+        createStick([half, -half, half], [half, half, half], true);
+        createStick([-half, -half, half], [-half, half, half], true);
+
+        createStick([-half, half, -half], [half, half, -half]);
+        createStick([half, half, -half], [half, half, half]);
+        createStick([half, half, half], [-half, half, half]);
+        createStick([-half, half, half], [-half, half, -half]);
+
+        createStick([-half, -half, -half], [half, -half, -half]);
+        createStick([half, -half, -half], [half, -half, half]);
+        createStick([half, -half, half], [-half, -half, half]);
+        createStick([-half, -half, half], [-half, -half, -half]);
+
+        bambooGroup.rotation.set(0.35, -0.65, 0.12);
+
+        const dom = bambooRenderer.domElement;
+        dom.addEventListener('mousedown', (e) => {
+          isBambooDragging = true;
+          bambooPreviousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+        window.addEventListener('mouseup', () => { isBambooDragging = false; });
+        dom.addEventListener('mousemove', (e) => {
+          if (!isBambooDragging || !bambooGroup) return;
+          const deltaX = e.clientX - bambooPreviousMousePosition.x;
+          const deltaY = e.clientY - bambooPreviousMousePosition.y;
+          bambooGroup.rotation.y += deltaX * 0.01;
+          bambooGroup.rotation.x += deltaY * 0.01;
+          bambooPreviousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        dom.addEventListener('touchstart', (e) => {
+          if (e.touches.length === 1) {
+            isBambooDragging = true;
+            bambooPreviousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+          }
+        }, { passive: true });
+        window.addEventListener('touchend', () => { isBambooDragging = false; });
+        dom.addEventListener('touchmove', (e) => {
+          if (!isBambooDragging || !bambooGroup || e.touches.length !== 1) return;
+          const deltaX = e.touches[0].clientX - bambooPreviousMousePosition.x;
+          const deltaY = e.touches[0].clientY - bambooPreviousMousePosition.y;
+          bambooGroup.rotation.y += deltaX * 0.012;
+          bambooGroup.rotation.x += deltaY * 0.012;
+          bambooPreviousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }, { passive: true });
+
+        function animateBamboo() {
+          requestAnimationFrame(animateBamboo);
+          if (!isBambooDragging && bambooGroup) {
+            bambooGroup.rotation.y += 0.003;
+          }
+          bambooRenderer.render(bambooScene, bambooCamera);
+        }
+        animateBamboo();
+      } else {
+        bambooCamera.aspect = width / height;
+        bambooCamera.updateProjectionMatrix();
+        bambooRenderer.setSize(width, height);
+      }
+    }
+
+    // XỬ LÝ 3 GIAO DIỆN CỦA BÀI 4 (ĐÃ XÓA TOÀN BỘ CÂU CHÚ THÍCH GỢI Ý)
+    function setBambooViewMode(mode) {
+      sound.playPop();
+      bambooCurrentMode = mode;
+
+      const tabKhung = document.getElementById('tabModeKhung');
+      const tabMat = document.getElementById('tabModeMat');
+      const tab5Lanterns = document.getElementById('tabMode5Lanterns');
+      const container3D = document.getElementById('containerBamboo3D');
+      const container5View = document.getElementById('container5LanternsView');
+      const header3D = document.getElementById('bambooHeader3D');
+      const title3D = document.getElementById('bamboo3DTitle');
+      const caption = document.getElementById('bambooModeCaption');
+
+      [tabKhung, tabMat, tab5Lanterns].forEach(b => {
+        b.className = "py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white transition flex items-center justify-center gap-1";
+      });
+
+      if (mode === 'khung') {
+        tabKhung.className = "tab-btn-active py-2 rounded-xl text-xs font-bold text-slate-900 transition flex items-center justify-center gap-1";
+        container3D.classList.remove('hidden');
+        header3D.classList.remove('hidden');
+        container5View.classList.add('hidden');
+        title3D.textContent = "Xoay 360° khung tre";
+        caption.innerHTML = "";
+        if (innerPaperCube) innerPaperCube.visible = false;
+      } else if (mode === 'mat') {
+        tabMat.className = "tab-btn-active py-2 rounded-xl text-xs font-bold text-slate-900 transition flex items-center justify-center gap-1";
+        container3D.classList.remove('hidden');
+        header3D.classList.remove('hidden');
+        container5View.classList.add('hidden');
+        title3D.textContent = "Xoay 360° đèn dán mặt";
+        caption.innerHTML = "";
+        if (innerPaperCube) innerPaperCube.visible = true;
+      } else if (mode === '5denlong') {
+        tab5Lanterns.className = "tab-btn-active py-2 rounded-xl text-xs font-bold text-slate-900 transition flex items-center justify-center gap-1";
+        container3D.classList.add('hidden');
+        header3D.classList.add('hidden');
+        container5View.classList.remove('hidden');
+        caption.innerHTML = "";
+      }
+    }
+
+    document.getElementById('tabModeKhung').addEventListener('click', () => setBambooViewMode('khung'));
+    document.getElementById('tabModeMat').addEventListener('click', () => setBambooViewMode('mat'));
+    document.getElementById('tabMode5Lanterns').addEventListener('click', () => setBambooViewMode('5denlong'));
+
+    document.getElementById('btnResetBambooRotation').addEventListener('click', () => {
+      sound.playPop();
+      if (bambooGroup) {
+        bambooGroup.rotation.set(0.3, -0.6, 0.1);
+      }
+    });
+
+    document.getElementById('btnCheckGame4').addEventListener('click', () => {
+      const bambooVal = parseInt(document.getElementById('inputBambooCount').value, 10);
+      const paperVal = parseInt(document.getElementById('inputPaperCount').value, 10);
+      const formulaRaw = (document.getElementById('inputGame4Formula').value || '').trim().toLowerCase();
+
+      if (isNaN(bambooVal)) {
+        showFeedback({
+          isCorrect: false,
+          title: "Chưa điền số nan tre!",
+          message: "Em hãy điền số lượng nan tre ở câu a (1 chiếc đèn lồng khối lập phương có bao nhiêu cạnh?) nhé!",
+          onContinue: null
+        });
+        return;
+      }
+
+      if (!formulaRaw) {
+        showFeedback({
+          isCorrect: false,
+          title: "Chưa viết phép tính câu b!",
+          message: "Em hãy viết phép tính nhân để tính số tờ giấy màu dán 5 chiếc đèn lồng nhé!",
+          onContinue: null
+        });
+        return;
+      }
+
+      if (isNaN(paperVal)) {
+        showFeedback({
+          isCorrect: false,
+          title: "Chưa điền đáp số câu b!",
+          message: "Em hãy điền số tờ giấy màu tính được vào ô trống đáp số nhé!",
+          onContinue: null
+        });
+        return;
+      }
+
+      const normalizedFormula = formulaRaw.replace(/\s+/g, '').replace(/×/g, 'x').replace(/\*/g, 'x');
+      const isFormulaValid = normalizedFormula.includes('6x5') || normalizedFormula.includes('5x6');
+      const isBambooCorrect = (bambooVal === 12);
+      const isPaperCorrect = (paperVal === 30);
+
+      if (isBambooCorrect && isPaperCorrect && isFormulaValid) {
+        addScore(25);
+        sound.playFanfare();
+
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+        }
+
+        showFeedback({
+          isCorrect: true,
+          title: "Chúc mừng Kỹ sư trưởng 3A2!",
+          message: "Rất xuất sắc! Mỗi chiếc đèn lồng khối lập phương cần <strong>12 nan tre</strong> (12 cạnh). Mỗi chiếc có 6 mặt, vậy 5 chiếc cần phép tính <strong>6 × 5 = 30 tờ giấy màu</strong>!<br><span class='text-amber-300 font-bold'>+25 Điểm ⭐ (ĐẠT 100/100 ĐIỂM)</span>",
+          onContinue: () => {
+            document.getElementById('victoryStudentName').textContent = gameState.playerName;
+            document.getElementById('victoryFinalScore').textContent = gameState.score;
+            switchScreen('screenVictory');
+            if (typeof confetti === 'function') {
+              setTimeout(() => {
+                confetti({ particleCount: 160, spread: 100, origin: { y: 0.5 } });
+              }, 400);
+            }
+          }
+        });
+      } else {
+        let msg = "";
+        if (!isBambooCorrect) msg += "<br>• Khối lập phương có bao nhiêu cạnh thì cần bấy nhiêu nan tre (khối lập phương có 12 cạnh).";
+        if (!isFormulaValid) msg += "<br>• Phép tính đúng câu b là số mặt của 1 đèn nhân với 5: <strong>6 × 5 = 30</strong> (hoặc 5 × 6 = 30).";
+        if (!isPaperCorrect) msg += "<br>• 5 chiếc đèn lồng cần tất cả: 6 × 5 = <strong>30 tờ giấy màu</strong>.";
+        showFeedback({
+          isCorrect: false,
+          title: "Vật tư chưa chính xác!",
+          message: `Em hãy tính lại cẩn thận nhé:${msg}`,
+          onContinue: null
+        });
+      }
+    });
+
+    // ==========================================
+    // 7. THREE.JS TRANG CHIẾN THẮNG
+    // ==========================================
+    let victoryScene, victoryCamera, victoryRenderer, victoryBuildingGroup;
+    let isVictoryDragging = false, victoryPreviousMousePosition = { x: 0, y: 0 };
+
+    function initOrResizeVictory3D() {
+      const container = document.getElementById('containerVictory3D');
+      if (!container) return;
+
+      const width = container.clientWidth || 400;
+      const height = container.clientHeight || 280;
+
+      if (!victoryRenderer) {
+        victoryScene = new THREE.Scene();
+        victoryCamera = new THREE.PerspectiveCamera(42, width / height, 0.1, 1000);
+        victoryCamera.position.set(4.5, 3.6, 5.0);
+        victoryCamera.lookAt(0, 1.2, 0);
+
+        victoryRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        victoryRenderer.setSize(width, height);
+        victoryRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(victoryRenderer.domElement);
+
+        const ambLight = new THREE.AmbientLight(0xffffff, 0.95);
+        victoryScene.add(ambLight);
+
+        const sunLight = new THREE.DirectionalLight(0xfff7ed, 1.1);
+        sunLight.position.set(4, 7, 5);
+        victoryScene.add(sunLight);
+
+        const blueBackLight = new THREE.PointLight(0x38bdf8, 1.4, 30);
+        blueBackLight.position.set(-4, 4, -3);
+        victoryScene.add(blueBackLight);
+
+        victoryBuildingGroup = new THREE.Group();
+        victoryScene.add(victoryBuildingGroup);
+
+        const baseIslandGeom = new THREE.CylinderGeometry(2.3, 2.5, 0.3, 32);
+        const baseIslandMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.8 });
+        const island = new THREE.Mesh(baseIslandGeom, baseIslandMat);
+        island.position.set(0, -0.15, 0);
+        victoryBuildingGroup.add(island);
+
+        const baseBoxGeom = new THREE.BoxGeometry(2.2, 1.1, 1.5);
+        const glassMat = new THREE.MeshStandardMaterial({
+          color: 0x38bdf8,
+          roughness: 0.1,
+          metalness: 0.2,
+          transparent: true,
+          opacity: 0.85
+        });
+        const groundFloor = new THREE.Mesh(baseBoxGeom, glassMat);
+        groundFloor.position.set(0, 0.55, 0);
+        victoryBuildingGroup.add(groundFloor);
+
+        const groundEdges = new THREE.EdgesGeometry(baseBoxGeom);
+        const groundWire = new THREE.LineSegments(
+          groundEdges,
+          new THREE.LineBasicMaterial({ color: 0x06b6d4, linewidth: 2.5 })
+        );
+        groundWire.position.copy(groundFloor.position);
+        victoryBuildingGroup.add(groundWire);
+
+        const woodDoorGeom = new THREE.BoxGeometry(0.8, 0.9, 0.05);
+        const doorMat = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.5 });
+        const doorMesh = new THREE.Mesh(woodDoorGeom, doorMat);
+        doorMesh.position.set(0, 0.5, 0.77);
+        victoryBuildingGroup.add(doorMesh);
+
+        const woodTexture = createWoodFlowerTexture();
+        const obsGeom = new THREE.BoxGeometry(1.25, 1.25, 1.25);
+        const obsMat = new THREE.MeshStandardMaterial({ map: woodTexture, roughness: 0.35 });
+        const observatory = new THREE.Mesh(obsGeom, obsMat);
+        observatory.position.set(0, 1.72, 0);
+        victoryBuildingGroup.add(observatory);
+
+        const obsWire = new THREE.LineSegments(
+          new THREE.EdgesGeometry(obsGeom),
+          new THREE.LineBasicMaterial({ color: 0x4a2c16, linewidth: 2 })
+        );
+        obsWire.position.copy(observatory.position);
+        victoryBuildingGroup.add(obsWire);
+
+        const spiralPoints = [
+          new THREE.Vector3(1.2, 0.1, 0.8),
+          new THREE.Vector3(1.3, 0.6, -0.7),
+          new THREE.Vector3(-1.1, 1.1, -0.7),
+          new THREE.Vector3(-0.9, 1.6, 0.75),
+          new THREE.Vector3(0.7, 2.3, 0.7)
+        ];
+        const spiralCurve = new THREE.CatmullRomCurve3(spiralPoints);
+        const tubeGeom = new THREE.TubeGeometry(spiralCurve, 40, 0.045, 10, false);
+        const tubeMat = new THREE.MeshStandardMaterial({
+          color: 0xf97316,
+          emissive: 0xea580c,
+          emissiveIntensity: 0.4
+        });
+        const orangeTrack = new THREE.Mesh(tubeGeom, tubeMat);
+        victoryBuildingGroup.add(orangeTrack);
+
+        const robotGroup = new THREE.Group();
+        const robotBody = new THREE.Mesh(
+          new THREE.SphereGeometry(0.12, 16, 16),
+          new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.3, roughness: 0.2 })
+        );
+        const robotHead = new THREE.Mesh(
+          new THREE.SphereGeometry(0.08, 16, 16),
+          new THREE.MeshStandardMaterial({ color: 0x38bdf8 })
+        );
+        robotHead.position.set(0, 0.13, 0.05);
+        const robotAntenna = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.01, 0.01, 0.09),
+          new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+        );
+        robotAntenna.position.set(0, 0.22, 0.05);
+        const eye1 = new THREE.Mesh(new THREE.SphereGeometry(0.02), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+        eye1.position.set(-0.03, 0.14, 0.12);
+        const eye2 = eye1.clone();
+        eye2.position.set(0.03, 0.14, 0.12);
+
+        robotGroup.add(robotBody, robotHead, robotAntenna, eye1, eye2);
+        robotGroup.position.set(0.7, 2.4, 0.7);
+        victoryBuildingGroup.add(robotGroup);
+
+        const roofGeom = new THREE.ConeGeometry(0.9, 0.55, 4);
+        const roofMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.2 });
+        const roof = new THREE.Mesh(roofGeom, roofMat);
+        roof.position.set(0, 2.62, 0);
+        roof.rotation.y = Math.PI * 0.25;
+        victoryBuildingGroup.add(roof);
+
+        const poleGeom = new THREE.CylinderGeometry(0.025, 0.025, 0.9);
+        const poleMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.8 });
+        const pole = new THREE.Mesh(poleGeom, poleMat);
+        pole.position.set(0, 3.15, 0);
+        victoryBuildingGroup.add(pole);
+
+        const flagCanvas = document.createElement('canvas');
+        flagCanvas.width = 128;
+        flagCanvas.height = 64;
+        const fctx = flagCanvas.getContext('2d');
+        fctx.fillStyle = '#ef4444';
+        fctx.fillRect(0, 0, 128, 64);
+        fctx.fillStyle = '#fef08a';
+        fctx.font = 'bold 32px sans-serif';
+        fctx.textAlign = 'center';
+        fctx.fillText('⭐ 3A2', 64, 44);
+        const flagTex = new THREE.CanvasTexture(flagCanvas);
+        const flagGeom = new THREE.PlaneGeometry(0.5, 0.26);
+        const flagMat = new THREE.MeshBasicMaterial({ map: flagTex, side: THREE.DoubleSide });
+        const flag = new THREE.Mesh(flagGeom, flagMat);
+        flag.position.set(0.26, 3.35, 0);
+        victoryBuildingGroup.add(flag);
+
+        const lanternData = [
+          { x: -1.2, y: 2.1, z: 0.9, col: 0xef4444 },
+          { x: 1.2, y: 2.1, z: 0.9, col: 0x38bdf8 },
+          { x: 1.2, y: 2.1, z: -0.9, col: 0xa3e635 },
+          { x: -1.2, y: 2.1, z: -0.9, col: 0xfbbf24 }
+        ];
+
+        lanternData.forEach(item => {
+          const lBox = new THREE.Mesh(
+            new THREE.BoxGeometry(0.32, 0.32, 0.32),
+            new THREE.MeshStandardMaterial({
+              color: item.col,
+              emissive: item.col,
+              emissiveIntensity: 0.45,
+              roughness: 0.3
+            })
+          );
+          lBox.position.set(item.x, item.y, item.z);
+          victoryBuildingGroup.add(lBox);
+
+          const lWire = new THREE.LineSegments(
+            new THREE.EdgesGeometry(new THREE.BoxGeometry(0.33, 0.33, 0.33)),
+            new THREE.LineBasicMaterial({ color: 0xb45309 })
+          );
+          lWire.position.copy(lBox.position);
+          victoryBuildingGroup.add(lWire);
+
+          const ropeGeom = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(item.x, item.y + 0.16, item.z),
+            new THREE.Vector3(item.x * 0.4, 2.55, item.z * 0.4)
+          ]);
+          const rope = new THREE.Line(ropeGeom, new THREE.LineBasicMaterial({ color: 0xd97706 }));
+          victoryBuildingGroup.add(rope);
+        });
+
+        const dom = victoryRenderer.domElement;
+        dom.addEventListener('mousedown', (e) => {
+          isVictoryDragging = true;
+          victoryPreviousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+        window.addEventListener('mouseup', () => { isVictoryDragging = false; });
+        dom.addEventListener('mousemove', (e) => {
+          if (!isVictoryDragging || !victoryBuildingGroup) return;
+          const deltaX = e.clientX - victoryPreviousMousePosition.x;
+          const deltaY = e.clientY - victoryPreviousMousePosition.y;
+          victoryBuildingGroup.rotation.y += deltaX * 0.01;
+          victoryBuildingGroup.rotation.x += deltaY * 0.008;
+          victoryPreviousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        dom.addEventListener('touchstart', (e) => {
+          if (e.touches.length === 1) {
+            isVictoryDragging = true;
+            victoryPreviousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+          }
+        }, { passive: true });
+        window.addEventListener('touchend', () => { isVictoryDragging = false; });
+        dom.addEventListener('touchmove', (e) => {
+          if (!isVictoryDragging || !victoryBuildingGroup || e.touches.length !== 1) return;
+          const deltaX = e.touches[0].clientX - victoryPreviousMousePosition.x;
+          const deltaY = e.touches[0].clientY - victoryPreviousMousePosition.y;
+          victoryBuildingGroup.rotation.y += deltaX * 0.012;
+          victoryBuildingGroup.rotation.x += deltaY * 0.009;
+          victoryPreviousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }, { passive: true });
+
+        function animateVictory() {
+          requestAnimationFrame(animateVictory);
+          if (!isVictoryDragging && victoryBuildingGroup) {
+            victoryBuildingGroup.rotation.y += 0.005;
+          }
+          victoryRenderer.render(victoryScene, victoryCamera);
+        }
+        animateVictory();
+      } else {
+        victoryCamera.aspect = width / height;
+        victoryCamera.updateProjectionMatrix();
+        victoryRenderer.setSize(width, height);
+      }
+    }
+
+    document.getElementById('btnRestartGame').addEventListener('click', () => {
+      sound.playPop();
+      gameState.score = 0;
+      gameState.currentStation = 1;
+      gameState.game1SelectedShape = null;
+      gameState.game3CurrentStep = 0;
+      gameState.game3SelectedEdges = null;
+
+      document.getElementById('inputGreenEdges').value = '';
+      document.getElementById('inputRedEdges').value = '';
+      document.getElementById('inputGame2Formula').value = '';
+      document.getElementById('inputFlowersTotal').value = '';
+      document.getElementById('inputBambooCount').value = '';
+      document.getElementById('inputGame4Formula').value = '';
+      document.getElementById('inputPaperCount').value = '';
+      document.getElementById('scoreDisplay').textContent = '0';
+      updateAntVisuals(0);
+
+      const dropTarget = document.getElementById('svgDropFrontTarget');
+      dropTarget.setAttribute('fill', 'rgba(30, 41, 59, 0.4)');
+      dropTarget.setAttribute('stroke', '#64748b');
+      dropTarget.setAttribute('stroke-dasharray', '6,4');
+      document.getElementById('svgFrontLabel').textContent = "[CHỌN TẤM GỖ ĐỂ THỬ]";
+      document.getElementById('svgFrontLabel').setAttribute('fill', '#94a3b8');
+      document.getElementById('svgFacePreviewShape').innerHTML = '';
+      document.getElementById('dropStatusMessage').textContent = "💡 Bấm chọn hình tròn, tam giác hoặc chữ nhật để nhìn trực tiếp hình đó trên mặt khung sắt!";
+
+      document.querySelectorAll('.draggable-card').forEach(b => {
+        b.className = "draggable-card p-3 rounded-2xl bg-slate-800/90 border-2 border-slate-700 hover:border-slate-500 text-center text-xs font-bold transition active:scale-95 flex flex-col items-center justify-center gap-1 select-none";
+      });
+
+      document.querySelectorAll('.btn-edge-opt').forEach(b => {
+        b.className = "btn-edge-opt py-2.5 rounded-xl bg-slate-800 border border-slate-700 hover:border-emerald-400 font-extrabold text-sm text-slate-200 transition";
+      });
+
+      setBambooViewMode('khung');
+      updateStationIndicators(1);
+      switchScreen('screenWelcome');
+    });
+
+    document.getElementById('btnShareCertificate').addEventListener('click', () => {
+      sound.playPop();
+      const textToCopy = `🏆 [KẾT QUẢ CHIẾN DỊCH XÂY DỰNG TÒA NHÀ TƯƠNG LAI]\nĐội ngũ: ${gameState.playerName} - Lớp 3A2\nThành tích: Đạt ${gameState.score}/100 Điểm Xuất Sắc!\nĐã xuất sắc hoàn thiện cả 4 trạm Hình học không gian (Khối hộp chữ nhật & Khối lập phương).`;
+      
+      const textArea = document.createElement("textarea");
+      textArea.value = textToCopy;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        showToast("Đã sao chép thành tích vào bộ nhớ tạm!", '📋');
+      } catch (err) {
+        showToast("Không thể tự sao chép!", '⚠');
+      }
+      document.body.removeChild(textArea);
+    });
+
+    window.addEventListener('resize', () => {
+      if (!document.getElementById('screenGame2').classList.contains('hidden')) {
+        initOrResizeCube3D();
+      }
+      if (!document.getElementById('screenGame4').classList.contains('hidden')) {
+        initOrResizeBamboo3D();
+      }
+      if (!document.getElementById('screenVictory').classList.contains('hidden')) {
+        initOrResizeVictory3D();
+      }
+    });
+  </script>
+</body>
+</html>
